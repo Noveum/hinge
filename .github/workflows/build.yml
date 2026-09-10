@@ -1,0 +1,33 @@
+name: Build Hinge
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hinge-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  macos:
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - name: Build prototype installer
+        env:
+          HINGE_BUILD_NUMBER: ${{ github.run_number }}
+        run: scripts/package.sh
+      - name: Save installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: Hinge-macOS
+          path: |
+            dist/Hinge.dmg
+            dist/Hinge.dmg.sha256
+          if-no-files-found: error
+          retention-days: 30
