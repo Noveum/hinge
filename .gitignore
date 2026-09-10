@@ -7,3 +7,7 @@ web/.env*
 
 dist/
 web/.vercel/
+
+node_modules/
+.venv/
+.lycheecache

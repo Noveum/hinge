@@ -1,0 +1,12 @@
+{
+  "name": "hinge-checks",
+  "private": true,
+  "scripts": {
+    "check": "python3 scripts/check.py policy && python3 scripts/check.py biome",
+    "check:links": "python3 scripts/check.py links",
+    "check:native": "python3 scripts/check.py native"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.13"
+  }
+}

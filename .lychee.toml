@@ -1,0 +1,9 @@
+max_concurrency = 8
+max_retries = 2
+timeout = 30
+exclude_loopback = true
+exclude = [
+  '^[h]ttps://x\.com/[^/]+/status/\d+$',
+  '^[h]ttps://api\.github\.com/repos/Noveum/hinge/releases/(latest|assets/.*)$',
+  '^[h]ttp://www\.apple\.com/DTDs/PropertyList-1\.0\.dtd$',
+]

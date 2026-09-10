@@ -13,7 +13,10 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  checks:
+    uses: ./.github/workflows/checks.yml
   macos:
+    needs: checks
     runs-on: macos-15
     timeout-minutes: 15
     steps:

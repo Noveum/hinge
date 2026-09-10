@@ -1,0 +1,44 @@
+name: Repository checks
+
+on:
+  pull_request:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: scripts/requirements.txt
+      - name: Install check tools
+        run: |
+          npm ci
+          python -m pip install -r scripts/requirements.txt
+          brew install actionlint shellcheck lychee yamllint swift-format
+      - name: Enforce tracked-file policy
+        run: python scripts/check.py policy
+      - name: Biome formatting and lint
+        run: python scripts/check.py biome
+      - name: Native and configuration lint
+        run: python scripts/check.py native
+      - name: Check tracked-file links
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python scripts/check.py links
+      - name: Compile Swift and Metal
+        run: |
+          make build
+          xcrun -sdk macosx metal -c Resources/Fold.metal -o build/Fold.air
