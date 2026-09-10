@@ -19,7 +19,7 @@ final class ScreenFrames: NSObject, SCStreamOutput, SCStreamDelegate {
 }
 
 @MainActor
-final class LiveDesktop: ObservableObject {
+final class LiveDesktop: NSObject, ObservableObject {
     @Published private(set) var isActive = false
     @Published private(set) var isStarting = false
     @Published private(set) var sensorAvailable = false
@@ -33,6 +33,7 @@ final class LiveDesktop: ObservableObject {
     private var renderer: DesktopRenderer?
     private var overlay: NSWindow?
     private var metalView: MTKView?
+    private var displayLink: CADisplayLink?
     private var session = UUID()
     private var observers = [NSObjectProtocol]()
     private var resumeAfterWake = false
@@ -41,7 +42,8 @@ final class LiveDesktop: ObservableObject {
     private var capturedDisplayID: CGDirectDisplayID?
     private var includedWindowIDs = Set<CGWindowID>()
 
-    init() {
+    override init() {
+        super.init()
         let motion = motion
         sensor.onAngle = { [weak self] angle in
             let update = motion.receive(angle)
@@ -86,7 +88,7 @@ final class LiveDesktop: ObservableObject {
         }
         openAngle = angle
         error = nil
-        metalView?.isPaused = true
+        displayLink?.isPaused = true
         metalView?.draw()
     }
 
@@ -237,7 +239,6 @@ final class LiveDesktop: ObservableObject {
         view.colorspace = CGColorSpace(name: CGColorSpace.sRGB)
         view.clearColor = MTLClearColorMake(0, 0, 0, 0)
         view.framebufferOnly = true
-        view.preferredFramesPerSecond = min(max(screen.maximumFramesPerSecond, 60), 120)
         view.isPaused = true
         view.enableSetNeedsDisplay = false
         view.autoResizeDrawable = true
@@ -248,16 +249,28 @@ final class LiveDesktop: ObservableObject {
         metalView = view
         window.orderFrontRegardless()
         view.draw()
+        let link = view.displayLink(target: self, selector: #selector(drawFrame(_:)))
+        let refresh = Float(min(max(screen.maximumFramesPerSecond, 60), 120))
+        link.preferredFrameRateRange = CAFrameRateRange(minimum: refresh, maximum: refresh, preferred: refresh)
+        link.isPaused = true
+        link.add(to: .main, forMode: .common)
+        displayLink = link
     }
 
     private func beginRendering() {
-        guard isActive, motion.isClosing, let metalView else { return }
-        metalView.isPaused = false
+        guard isActive, motion.isClosing else { return }
+        displayLink?.isPaused = false
+    }
+
+    @objc private func drawFrame(_ link: CADisplayLink) {
+        guard isActive else { return }
+        renderer?.presentationTime = link.targetTimestamp
+        metalView?.draw()
     }
 
     private func restOverlay() {
         guard !motion.isClosing else { return }
-        metalView?.isPaused = true
+        displayLink?.isPaused = true
     }
 
     private func refreshDisplay() {
@@ -298,6 +311,8 @@ final class LiveDesktop: ObservableObject {
         }
         session = UUID()
         motion.setEnabled(false)
+        displayLink?.invalidate()
+        displayLink = nil
         metalView?.isPaused = true
         metalView?.delegate = nil
         overlay?.orderOut(nil)

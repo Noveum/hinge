@@ -23,6 +23,7 @@ final class DesktopRenderer: NSObject, MTKViewDelegate {
     private var blurredGeneration: UInt64?
     private let motion: LidMotion
     private var wasPresented = false
+    var presentationTime: CFTimeInterval?
     var onPresentation: ((Error?) -> Void)?
     var onRest: (() -> Void)?
     private(set) var renderedFrames = 0
@@ -135,7 +136,9 @@ final class DesktopRenderer: NSObject, MTKViewDelegate {
     }
 
     func draw(in view: MTKView) {
-        let progress = motion.sample()
+        let time = presentationTime ?? CACurrentMediaTime()
+        presentationTime = nil
+        let progress = motion.sample(at: time)
         guard progress > 0 else {
             clear(view)
             return
