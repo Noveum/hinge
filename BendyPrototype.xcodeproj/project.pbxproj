@@ -64,24 +64,6 @@
 			<key>fileRef</key>
 			<string>D07A26CE17EABF394176C507</string>
 		</dict>
-		<key>26D565364A772643F6228536</key>
-		<dict>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>sourcecode.swift</string>
-			<key>path</key>
-			<string>FoldSurface.swift</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>831C5B4784A8EAF2439A4DB2</key>
-		<dict>
-			<key>isa</key>
-			<string>PBXBuildFile</string>
-			<key>fileRef</key>
-			<string>26D565364A772643F6228536</string>
-		</dict>
 		<key>75017C803F3BD9BCA2AD760F</key>
 		<dict>
 			<key>isa</key>
@@ -136,24 +118,6 @@
 			<key>fileRef</key>
 			<string>EEDE96C56CBAC202420A47BC</string>
 		</dict>
-		<key>6AB98560212B2FDAAF9B863D</key>
-		<dict>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>sourcecode.swift</string>
-			<key>path</key>
-			<string>Wallpaper.swift</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>22B9C8A9DC1FED0641219A41</key>
-		<dict>
-			<key>isa</key>
-			<string>PBXBuildFile</string>
-			<key>fileRef</key>
-			<string>6AB98560212B2FDAAF9B863D</string>
-		</dict>
 		<key>560737C72BC60145ADB91F3E</key>
 		<dict>
 			<key>isa</key>
@@ -190,24 +154,6 @@
 			<key>fileRef</key>
 			<string>38D78C33EBAE0C0ED96716CF</string>
 		</dict>
-		<key>BD8A5D4CDC4A388E6967E962</key>
-		<dict>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>audio.mp3</string>
-			<key>path</key>
-			<string>fold.mp3</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>72E85F25367D429FD6A1A712</key>
-		<dict>
-			<key>isa</key>
-			<string>PBXBuildFile</string>
-			<key>fileRef</key>
-			<string>BD8A5D4CDC4A388E6967E962</string>
-		</dict>
 		<key>BCE16DD0260827ECF338C787</key>
 		<dict>
 			<key>isa</key>
@@ -217,11 +163,9 @@
 				<string>0FAA19D55515F2C82516CEB3</string>
 				<string>B208C7D6FFDF416385E4D0DF</string>
 				<string>D07A26CE17EABF394176C507</string>
-				<string>26D565364A772643F6228536</string>
 				<string>75017C803F3BD9BCA2AD760F</string>
 				<string>4A57EFA62E37A174C03C000F</string>
 				<string>EEDE96C56CBAC202420A47BC</string>
-				<string>6AB98560212B2FDAAF9B863D</string>
 			</array>
 			<key>path</key>
 			<string>Sources</string>
@@ -236,7 +180,6 @@
 			<array>
 				<string>560737C72BC60145ADB91F3E</string>
 				<string>38D78C33EBAE0C0ED96716CF</string>
-				<string>BD8A5D4CDC4A388E6967E962</string>
 			</array>
 			<key>path</key>
 			<string>Resources</string>
@@ -305,11 +248,9 @@
 				<string>0BC3004ACCD204AD3A55774B</string>
 				<string>EB3912A4E832542BD85C7D90</string>
 				<string>66B44EC0ED7E54C4607D70F2</string>
-				<string>831C5B4784A8EAF2439A4DB2</string>
 				<string>4F87324F1438ABED37B95379</string>
 				<string>DAEA9D08F6B5E79A226FC00D</string>
 				<string>289C8D3C22097DA2A314830F</string>
-				<string>22B9C8A9DC1FED0641219A41</string>
 			</array>
 			<key>runOnlyForDeploymentPostprocessing</key>
 			<string>0</string>
@@ -324,7 +265,6 @@
 			<array>
 				<string>51C92A1C51E552B028484AA9</string>
 				<string>F7F4970B79E37D1A4C454958</string>
-				<string>72E85F25367D429FD6A1A712</string>
 			</array>
 			<key>runOnlyForDeploymentPostprocessing</key>
 			<string>0</string>

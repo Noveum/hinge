@@ -5,7 +5,7 @@ SOURCES = $(wildcard Sources/*.swift)
 
 build:
 	mkdir -p "$(APP)/Contents/MacOS" "$(APP)/Contents/Resources"
-	xcrun swiftc -swift-version 5 -O -target arm64-apple-macosx14.0 $(SOURCES) -o "$(APP)/Contents/MacOS/BendyPrototype" -framework SwiftUI -framework AppKit -framework IOKit -framework AVFoundation -framework ScreenCaptureKit -framework MetalKit -framework Carbon
+	xcrun swiftc -swift-version 5 -O -target arm64-apple-macosx14.0 $(SOURCES) -o "$(APP)/Contents/MacOS/BendyPrototype" -framework SwiftUI -framework AppKit -framework IOKit -framework ScreenCaptureKit -framework MetalKit -framework MetalPerformanceShaders
 	cp Info.plist "$(APP)/Contents/Info.plist"
 	cp Resources/* "$(APP)/Contents/Resources/"
 	codesign --force --sign - "$(APP)"

@@ -1,7 +1,6 @@
 import SwiftUI
 import ScreenCaptureKit
 import MetalKit
-import Carbon
 
 final class ScreenFrames: NSObject, SCStreamOutput, SCStreamDelegate {
     var renderer: DesktopRenderer?
@@ -19,63 +18,49 @@ final class ScreenFrames: NSObject, SCStreamOutput, SCStreamDelegate {
     func stream(_ stream: SCStream, didStopWithError error: Error) { onFailure?(error) }
 }
 
-final class EscapeShortcut {
-    private var hotKey: EventHotKeyRef?
-    private var handler: EventHandlerRef?
-    var onEscape: (() -> Void)?
-
-    func register() {
-        var event = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
-        let pointer = Unmanaged.passUnretained(self).toOpaque()
-        InstallEventHandler(GetApplicationEventTarget(), { _, _, data in
-            guard let data else { return noErr }
-            let shortcut = Unmanaged<EscapeShortcut>.fromOpaque(data).takeUnretainedValue()
-            DispatchQueue.main.async { shortcut.onEscape?() }
-            return noErr
-        }, 1, &event, pointer, &handler)
-        RegisterEventHotKey(UInt32(kVK_Escape), 0, EventHotKeyID(signature: 0x424E4459, id: 1), GetApplicationEventTarget(), 0, &hotKey)
-    }
-
-    func unregister() {
-        if let hotKey { UnregisterEventHotKey(hotKey) }
-        if let handler { RemoveEventHandler(handler) }
-        hotKey = nil
-        handler = nil
-    }
-
-    deinit { unregister() }
-}
-
 @MainActor
 final class LiveDesktop: ObservableObject {
     @Published private(set) var isActive = false
     @Published private(set) var isStarting = false
-    @Published private(set) var isDemo = false
-    @Published var error: String?
-    @Published var needsPermission = false
-    @Published private(set) var status = "Ready to bend your desktop"
+    @Published private(set) var sensorAvailable = false
+    @Published private(set) var openAngle: Double?
+    @Published private(set) var error: String?
+    @Published private(set) var needsPermission = false
+    private let sensor = LidSensor()
+    private let motion = LidMotion()
     private var stream: SCStream?
     private var frames: ScreenFrames?
     private var renderer: DesktopRenderer?
     private var overlay: NSWindow?
     private var metalView: MTKView?
-    private var timer: Timer?
-    private var progress = 0.0
-    private var lastTime = CACurrentMediaTime()
-    private var demoStart: CFTimeInterval?
-    private var captureStart: CFTimeInterval = 0
-    private var wasFolded = false
-    private var escape = EscapeShortcut()
-    private weak var model: BendModel?
     private var session = UUID()
     private var observers = [NSObjectProtocol]()
     private var resumeAfterWake = false
     private var wakeTask: Task<Void, Never>?
+    private var frameTimeout: Task<Void, Never>?
+    private var displayTask: Task<Void, Never>?
     private var capturedDisplayID: CGDirectDisplayID?
     private var includedWindowIDs = Set<CGWindowID>()
 
     init() {
-        escape.onEscape = { [weak self] in self?.stop() }
+        let motion = motion
+        sensor.onAngle = { [weak self] angle in
+            let update = motion.receive(angle)
+            guard update.availabilityChanged || update.beganClosing else { return }
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                if update.availabilityChanged {
+                    self.sensorAvailable = update.available
+                    if update.available, self.openAngle == nil { self.setOpenPosition() }
+                    if !update.available, self.isActive {
+                        self.stop()
+                        self.error = "The lid sensor stopped responding. Turn Hinge on again to reconnect."
+                    }
+                }
+                if update.beganClosing { self.beginRendering() }
+            }
+        }
+        sensor.start()
         let center = NSWorkspace.shared.notificationCenter
         for name in [NSWorkspace.willSleepNotification, NSWorkspace.screensDidSleepNotification] {
             observers.append(center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
@@ -88,37 +73,49 @@ final class LiveDesktop: ObservableObject {
             })
         }
         observers.append(NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
-            Task { @MainActor in
-                guard let self, !self.resumeAfterWake else { return }
-                self.stop()
-            }
+            Task { @MainActor in self?.refreshDisplay() }
         })
         observers.append(NotificationCenter.default.addObserver(forName: NSWindow.didBecomeKeyNotification, object: nil, queue: .main) { [weak self] _ in
             Task { @MainActor in await self?.refreshIncludedWindows() }
         })
     }
 
-    func start(model: BendModel, demo: Bool = false) async {
-        guard !isStarting else { return }
-        if isActive { stop() }
-        self.model = model
+    func setOpenPosition() {
+        guard let angle = motion.calibrate() else {
+            error = "Open the lid to your comfortable viewing position first."
+            return
+        }
+        openAngle = angle
+        error = nil
+        restOverlay()
+    }
+
+    func start(calibrate: Bool = true) async {
+        guard !isStarting, !isActive else { return }
         error = nil
         needsPermission = false
-        if !demo && model.sensorAngle == nil {
-            error = "The lid sensor is unavailable. You can still run a live desktop demo."
+        guard sensorAvailable else {
+            sensor.reconnect()
+            error = "The lid sensor is unavailable. Reconnecting, try turning Hinge on again in a moment."
             return
+        }
+        if calibrate {
+            guard let angle = motion.calibrate() else {
+                error = "Open the lid to your comfortable viewing position first."
+                return
+            }
+            openAngle = angle
         }
         guard CGPreflightScreenCaptureAccess() || CGRequestScreenCaptureAccess() else {
             needsPermission = true
-            error = "Allow Bendy Prototype in System Settings > Privacy & Security > Screen & System Audio Recording, then reopen the app."
+            error = "Allow Hinge in Screen Recording settings, then quit and reopen it."
             return
         }
         isStarting = true
-        status = "Preparing live desktop…"
         let session = UUID()
         self.session = session
         do {
-            let renderer = try DesktopRenderer(resources: .main)
+            let renderer = try DesktopRenderer(resources: .main, motion: motion)
             let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
             guard self.session == session else { return }
             guard let display = content.displays.first(where: { CGDisplayIsBuiltin($0.displayID) != 0 }),
@@ -130,10 +127,12 @@ final class LiveDesktop: ObservableObject {
             let filter = SCContentFilter(display: display, excludingApplications: ownApplications, exceptingWindows: ownWindows)
             capturedDisplayID = display.displayID
             includedWindowIDs = Set(ownWindows.map(\.windowID))
+            let area = screen.visibleFrame
             let configuration = SCStreamConfiguration()
-            let scale = min(screen.backingScaleFactor, 2400 / screen.frame.width)
-            configuration.width = Int(screen.frame.width * scale) / 2 * 2
-            configuration.height = Int(screen.frame.height * scale) / 2 * 2
+            configuration.sourceRect = CGRect(x: area.minX - screen.frame.minX, y: screen.frame.maxY - area.maxY, width: area.width, height: area.height)
+            let scale = min(screen.backingScaleFactor, 2400 / area.width)
+            configuration.width = Int(area.width * scale) / 2 * 2
+            configuration.height = Int(area.height * scale) / 2 * 2
             configuration.minimumFrameInterval = CMTime(value: 1, timescale: 60)
             configuration.queueDepth = 3
             configuration.pixelFormat = kCVPixelFormatType_32BGRA
@@ -150,7 +149,7 @@ final class LiveDesktop: ObservableObject {
                 }
             }
             let stream = SCStream(filter: filter, configuration: configuration, delegate: frames)
-            try stream.addStreamOutput(frames, type: .screen, sampleHandlerQueue: DispatchQueue(label: "bendy.capture", qos: .userInteractive))
+            try stream.addStreamOutput(frames, type: .screen, sampleHandlerQueue: DispatchQueue(label: "hinge.capture", qos: .userInteractive))
             self.renderer = renderer
             self.frames = frames
             self.stream = stream
@@ -159,30 +158,28 @@ final class LiveDesktop: ObservableObject {
                 if let failure {
                     self.stop()
                     self.error = "The desktop renderer stopped: \(failure.localizedDescription)"
-                } else if self.progress > 0.0001 {
+                } else if self.overlay?.isVisible == true {
                     self.overlay?.alphaValue = 1
                 }
             }
-            try await stream.startCapture()
-            guard self.session == session else { try? await stream.stopCapture(); return }
+            renderer.onRest = { [weak self] in self?.restOverlay() }
             makeOverlay(screen: screen, renderer: renderer)
-            model.stop()
-            model.isEnabled = true
-            model.followLid = !demo
-            if let angle = model.sensorAngle, !demo { model.angle = angle }
+            try await stream.startCapture()
+            guard self.session == session else {
+                try? await stream.stopCapture()
+                return
+            }
+            motion.setEnabled(true)
             isActive = true
             isStarting = false
-            isDemo = demo
-            captureStart = CACurrentMediaTime()
-            demoStart = nil
-            lastTime = captureStart
-            status = demo ? "Playing on your desktop" : "Following your MacBook lid"
-            escape.register()
-            let timer = Timer(timeInterval: 1 / 60, repeats: true) { [weak self] _ in
-                MainActor.assumeIsolated { self?.tick() }
+            if motion.isClosing { beginRendering() }
+            frameTimeout = Task { [weak self] in
+                do { try await Task.sleep(for: .seconds(5)) } catch { return }
+                guard let self, self.session == session, !renderer.hasFrame else { return }
+                self.stop()
+                self.error = "No desktop frames arrived. Check Screen Recording permission and reopen Hinge."
+                self.needsPermission = true
             }
-            self.timer = timer
-            RunLoop.main.add(timer, forMode: .common)
         } catch {
             guard self.session == session else { return }
             stop()
@@ -194,7 +191,7 @@ final class LiveDesktop: ObservableObject {
         content.windows.filter {
             $0.owningApplication?.processID == ProcessInfo.processInfo.processIdentifier &&
             $0.windowID != CGWindowID(overlay?.windowNumber ?? 0) &&
-            $0.title != "Bendy Desktop Overlay"
+            $0.title != "Hinge Desktop Overlay"
         }
     }
 
@@ -219,8 +216,9 @@ final class LiveDesktop: ObservableObject {
     }
 
     private func makeOverlay(screen: NSScreen, renderer: DesktopRenderer) {
-        let window = NSWindow(contentRect: screen.frame, styleMask: .borderless, backing: .buffered, defer: false)
-        window.title = "Bendy Desktop Overlay"
+        let area = screen.visibleFrame
+        let window = NSWindow(contentRect: area, styleMask: .borderless, backing: .buffered, defer: false)
+        window.title = "Hinge Desktop Overlay"
         window.level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.screenSaverWindow)))
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
         window.isOpaque = true
@@ -231,97 +229,65 @@ final class LiveDesktop: ObservableObject {
         window.isReleasedWhenClosed = false
         window.sharingType = .readOnly
         window.alphaValue = 0.001
-        let view = MTKView(frame: NSRect(origin: .zero, size: screen.frame.size), device: renderer.device)
+        let view = MTKView(frame: NSRect(origin: .zero, size: area.size), device: renderer.device)
         view.delegate = renderer
         view.colorPixelFormat = .bgra8Unorm
         view.colorspace = CGColorSpace(name: CGColorSpace.sRGB)
         view.clearColor = MTLClearColorMake(0, 0, 0, 1)
         view.framebufferOnly = true
+        view.preferredFramesPerSecond = min(max(screen.maximumFramesPerSecond, 60), 120)
         view.isPaused = true
         view.enableSetNeedsDisplay = false
         view.autoResizeDrawable = true
         window.contentView = view
-        window.setFrame(screen.frame, display: false)
+        window.setFrame(area, display: false)
         overlay = window
         metalView = view
-        renderer.parameters.width = Float(screen.frame.width)
-        renderer.parameters.height = Float(screen.frame.height)
     }
 
-    private func tick() {
-        guard let model, let renderer, let metalView, let overlay else { return }
-        let now = CACurrentMediaTime()
-        guard renderer.hasFrame else {
-            if now - captureStart > 8 {
-                stop()
-                error = "No desktop frames arrived. Check Screen Recording permission and try again."
-            }
-            return
-        }
-        if isDemo {
-            if demoStart == nil { demoStart = now }
-            let t = now - (demoStart ?? now)
-            let angle: Double
-            if t < 1 { angle = 135 }
-            else if t < 3.4 { angle = 135 - 123 * ease((t - 1) / 2.4) }
-            else if t < 4 { angle = 12 }
-            else if t < 5.8 { angle = 12 + 123 * ease((t - 4) / 1.8) }
-            else if t < 6.8 { angle = 135 }
-            else { stop(); return }
-            model.angle = angle
-        } else if model.followLid {
-            guard model.sensorAngle != nil else {
-                stop()
-                error = "The lid sensor stopped responding. The desktop effect has been paused."
-                return
-            }
-        }
-        let delta = min(max(now - lastTime, 0.001), 0.1)
-        lastTime = now
-        let target = model.progress
-        progress += (target - progress) * (1 - exp(-delta / 0.085))
-        if abs(target - progress) < 0.0002 { progress = target }
-        if progress > 0.5 { wasFolded = true }
-        if wasFolded && progress < 0.004 {
-            wasFolded = false
-            model.playClick()
-            model.completedBends += 1
-        }
-        guard progress > 0.0001, model.isEnabled else {
-            overlay.orderOut(nil)
-            return
-        }
-        renderer.parameters.progress = Float(progress)
-        renderer.parameters.perspective = Float(model.perspective)
-        renderer.parameters.blur = Float(model.blur * model.style.blurMultiplier)
-        renderer.parameters.shadow = Float(model.shadow * model.style.shadowMultiplier)
-        renderer.parameters.frost = model.style == .frost ? 1 : 0
+    private func beginRendering() {
+        guard isActive, motion.isClosing, let overlay, let metalView else { return }
         if !overlay.isVisible {
+            renderer?.preparePresentation()
             overlay.alphaValue = 0.001
             overlay.orderFrontRegardless()
         }
-        metalView.draw()
+        metalView.isPaused = false
     }
 
-    private func ease(_ value: Double) -> Double {
-        let t = min(max(value, 0), 1)
-        return t * t * (3 - 2 * t)
+    private func restOverlay() {
+        guard !motion.isClosing else { return }
+        metalView?.isPaused = true
+        overlay?.orderOut(nil)
+    }
+
+    private func refreshDisplay() {
+        guard isActive, !resumeAfterWake else { return }
+        displayTask?.cancel()
+        displayTask = Task { [weak self] in
+            do { try await Task.sleep(for: .milliseconds(300)) } catch { return }
+            guard let self, self.isActive, !self.resumeAfterWake else { return }
+            self.displayTask = nil
+            self.stop()
+            await self.start(calibrate: false)
+        }
     }
 
     private func suspendForSleep() {
-        resumeAfterWake = resumeAfterWake || (isActive && !isDemo)
+        resumeAfterWake = resumeAfterWake || isActive || isStarting
         stop(preserveResume: true)
+        sensor.stop()
     }
 
     private func resumeFromSleep() {
-        guard resumeAfterWake, let model, wakeTask == nil else { return }
+        sensor.reconnect()
+        guard resumeAfterWake, wakeTask == nil else { return }
         wakeTask = Task { [weak self] in
             do { try await Task.sleep(for: .seconds(1)) } catch { return }
             guard let self, self.resumeAfterWake, !Task.isCancelled else { return }
             self.wakeTask = nil
             self.resumeAfterWake = false
-            model.reconnectSensor()
-            await self.start(model: model)
+            await self.start(calibrate: false)
         }
     }
 
@@ -332,13 +298,17 @@ final class LiveDesktop: ObservableObject {
             wakeTask = nil
         }
         session = UUID()
+        motion.setEnabled(false)
+        metalView?.isPaused = true
+        metalView?.delegate = nil
         overlay?.orderOut(nil)
         overlay?.close()
         overlay = nil
         metalView = nil
-        timer?.invalidate()
-        timer = nil
-        escape.unregister()
+        frameTimeout?.cancel()
+        frameTimeout = nil
+        displayTask?.cancel()
+        displayTask = nil
         let oldStream = stream
         let oldFrames = frames
         stream = nil
@@ -352,17 +322,12 @@ final class LiveDesktop: ObservableObject {
         renderer = nil
         capturedDisplayID = nil
         includedWindowIDs = []
-        progress = 0
-        wasFolded = false
-        demoStart = nil
         isActive = false
         isStarting = false
-        isDemo = false
-        status = "Ready to bend your desktop"
     }
 
-    func showSettings() {
-        NSApp.activate(ignoringOtherApps: true)
-        NSApp.windows.first(where: { $0.title == "Bendy Prototype" })?.makeKeyAndOrderFront(nil)
+    func shutDown() {
+        stop()
+        sensor.stop()
     }
 }

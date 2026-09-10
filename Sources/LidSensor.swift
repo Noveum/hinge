@@ -2,15 +2,27 @@ import Foundation
 import IOKit.hid
 
 final class LidSensor {
+    private let queue = DispatchQueue(label: "hinge.sensor", qos: .userInteractive)
     private var manager: IOHIDManager?
     private var device: IOHIDDevice?
-    private var timer: Timer?
+    private var timer: DispatchSourceTimer?
     private var failures = 0
     var onAngle: ((Double?) -> Void)?
 
     func start() {
+        queue.async { [weak self] in self?.connect() }
+    }
+
+    func reconnect() {
+        queue.async { [weak self] in
+            self?.disconnect()
+            self?.connect()
+        }
+    }
+
+    private func connect() {
         guard timer == nil else { return }
-        let manager = IOHIDManagerCreate(kCFAllocatorDefault, IOOptionBits(kIOHIDOptionsTypeNone))
+        let manager = IOHIDManagerCreate(kCFAllocatorDefault, 0)
         self.manager = manager
         let matching: [String: Any] = [
             kIOHIDVendorIDKey: 0x05AC,
@@ -21,6 +33,7 @@ final class LidSensor {
         guard IOHIDManagerOpen(manager, 0) == kIOReturnSuccess,
               let devices = IOHIDManagerCopyDevices(manager) as? Set<IOHIDDevice> else {
             onAngle?(nil)
+            disconnect()
             return
         }
         for candidate in devices {
@@ -31,11 +44,18 @@ final class LidSensor {
             }
             IOHIDDeviceClose(candidate, 0)
         }
-        guard device != nil else { onAngle?(nil); return }
+        guard device != nil else {
+            onAngle?(nil)
+            disconnect()
+            return
+        }
+        failures = 0
         poll()
-        let timer = Timer(timeInterval: 1 / 30, repeats: true) { [weak self] _ in self?.poll() }
+        let timer = DispatchSource.makeTimerSource(queue: queue)
+        timer.schedule(deadline: .now(), repeating: .nanoseconds(8_333_333), leeway: .microseconds(500))
+        timer.setEventHandler { [weak self] in self?.poll() }
         self.timer = timer
-        RunLoop.main.add(timer, forMode: .common)
+        timer.resume()
     }
 
     private func read(_ device: IOHIDDevice) -> Double? {
@@ -51,7 +71,7 @@ final class LidSensor {
         guard let device else { return }
         guard let angle = read(device) else {
             failures += 1
-            if failures == 15 { onAngle?(nil) }
+            if failures == 30 { onAngle?(nil) }
             return
         }
         failures = 0
@@ -59,7 +79,11 @@ final class LidSensor {
     }
 
     func stop() {
-        timer?.invalidate()
+        queue.async { [weak self] in self?.disconnect() }
+    }
+
+    private func disconnect() {
+        timer?.cancel()
         timer = nil
         if let device { IOHIDDeviceClose(device, 0) }
         device = nil
@@ -67,5 +91,5 @@ final class LidSensor {
         manager = nil
     }
 
-    deinit { stop() }
+    deinit { disconnect() }
 }
