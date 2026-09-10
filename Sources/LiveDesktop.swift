@@ -23,11 +23,11 @@ final class LiveDesktop: NSObject, ObservableObject {
     @Published private(set) var isActive = false
     @Published private(set) var isStarting = false
     @Published private(set) var sensorAvailable = false
-    @Published private(set) var openAngle: Double?
+    @Published private(set) var openAngle: Double
     @Published private(set) var error: String?
     @Published private(set) var needsPermission = false
     private let sensor = LidSensor()
-    private let motion = LidMotion()
+    private let motion: LidMotion
     private var stream: SCStream?
     private var frames: ScreenFrames?
     private var renderer: DesktopRenderer?
@@ -43,6 +43,10 @@ final class LiveDesktop: NSObject, ObservableObject {
     private var includedWindowIDs = Set<CGWindowID>()
 
     override init() {
+        let savedAngle = UserDefaults.standard.object(forKey: "openAngle") as? Double ?? 100
+        let openAngle = savedAngle.isFinite && (25...180).contains(savedAngle) ? savedAngle : 100
+        self.openAngle = openAngle
+        motion = LidMotion(openAngle: openAngle)
         super.init()
         let motion = motion
         sensor.onAngle = { [weak self] angle in
@@ -52,7 +56,6 @@ final class LiveDesktop: NSObject, ObservableObject {
                 guard let self else { return }
                 if update.availabilityChanged {
                     self.sensorAvailable = update.available
-                    if update.available, self.openAngle == nil { self.setOpenPosition() }
                     if !update.available, self.isActive {
                         self.stop()
                         self.error = "The lid sensor stopped responding. Turn Hinge on again to reconnect."
@@ -87,12 +90,13 @@ final class LiveDesktop: NSObject, ObservableObject {
             return
         }
         openAngle = angle
+        UserDefaults.standard.set(angle, forKey: "openAngle")
         error = nil
         displayLink?.isPaused = true
         metalView?.draw()
     }
 
-    func start(calibrate: Bool = true) async {
+    func start() async {
         guard !isStarting, !isActive else { return }
         error = nil
         needsPermission = false
@@ -100,13 +104,6 @@ final class LiveDesktop: NSObject, ObservableObject {
             sensor.reconnect()
             error = "The lid sensor is unavailable. Reconnecting, try turning Hinge on again in a moment."
             return
-        }
-        if calibrate {
-            guard let angle = motion.calibrate() else {
-                error = "Open the lid to your comfortable viewing position first."
-                return
-            }
-            openAngle = angle
         }
         guard CGPreflightScreenCaptureAccess() || CGRequestScreenCaptureAccess() else {
             needsPermission = true
@@ -281,7 +278,7 @@ final class LiveDesktop: NSObject, ObservableObject {
             guard let self, self.isActive, !self.resumeAfterWake else { return }
             self.displayTask = nil
             self.stop()
-            await self.start(calibrate: false)
+            await self.start()
         }
     }
 
@@ -299,7 +296,7 @@ final class LiveDesktop: NSObject, ObservableObject {
             guard let self, self.resumeAfterWake, !Task.isCancelled else { return }
             self.wakeTask = nil
             self.resumeAfterWake = false
-            await self.start(calibrate: false)
+            await self.start()
         }
     }
 

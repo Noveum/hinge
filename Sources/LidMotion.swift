@@ -15,6 +15,10 @@ final class LidMotion {
     private var lastFrame = 0.0
     private var lastSample = 0.0
 
+    init(openAngle: Double = 100) {
+        baseline = openAngle
+    }
+
     struct Update {
         let availabilityChanged: Bool
         let available: Bool

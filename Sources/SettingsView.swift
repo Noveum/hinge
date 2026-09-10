@@ -36,7 +36,7 @@ struct SettingsView: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Open position").fontWeight(.medium)
-                        Text(desktop.openAngle.map { "\(Int($0))°" } ?? "Sensor unavailable")
+                        Text("\(Int(desktop.openAngle))°")
                             .foregroundStyle(.secondary)
                             .monospacedDigit()
                     }
@@ -59,7 +59,7 @@ struct SettingsView: View {
                 .font(.system(size: 12))
                 .fixedSize(horizontal: false, vertical: true)
             } else {
-                Text("Turn on with your lid at a comfortable angle. Set a new open position whenever you adjust it.")
+                Text("Starts at 100°. Set your comfortable open position once, and Hinge remembers it.")
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
