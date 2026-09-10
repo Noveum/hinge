@@ -18,6 +18,11 @@ final class ScreenFrames: NSObject, SCStreamOutput, SCStreamDelegate {
     func stream(_ stream: SCStream, didStopWithError error: Error) { onFailure?(error) }
 }
 
+final class DesktopPanel: NSPanel {
+    override var canBecomeKey: Bool { false }
+    override var canBecomeMain: Bool { false }
+}
+
 @MainActor
 final class LiveDesktop: NSObject, ObservableObject {
     @Published private(set) var isActive = false
@@ -76,6 +81,9 @@ final class LiveDesktop: NSObject, ObservableObject {
                 Task { @MainActor in self?.resumeFromSleep() }
             })
         }
+        observers.append(center.addObserver(forName: NSWorkspace.activeSpaceDidChangeNotification, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor in self?.refreshSpace() }
+        })
         observers.append(NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
             Task { @MainActor in self?.refreshDisplay() }
         })
@@ -127,7 +135,7 @@ final class LiveDesktop: NSObject, ObservableObject {
             let filter = SCContentFilter(display: display, excludingApplications: ownApplications, exceptingWindows: ownWindows)
             capturedDisplayID = display.displayID
             includedWindowIDs = Set(ownWindows.map(\.windowID))
-            let area = screen.visibleFrame
+            let area = captureArea(screen: screen, displayID: display.displayID, windows: content.windows)
             let configuration = SCStreamConfiguration()
             configuration.sourceRect = CGRect(x: area.minX - screen.frame.minX, y: screen.frame.maxY - area.maxY, width: area.width, height: area.height)
             let scale = min(screen.backingScaleFactor, 2400 / area.width)
@@ -163,7 +171,7 @@ final class LiveDesktop: NSObject, ObservableObject {
                 }
             }
             renderer.onRest = { [weak self] in self?.restOverlay() }
-            makeOverlay(screen: screen, renderer: renderer)
+            makeOverlay(screen: screen, area: area, renderer: renderer)
             try await stream.startCapture()
             guard self.session == session else {
                 try? await stream.stopCapture()
@@ -218,9 +226,46 @@ final class LiveDesktop: NSObject, ObservableObject {
         }
     }
 
-    private func makeOverlay(screen: NSScreen, renderer: DesktopRenderer) {
-        let area = screen.visibleFrame
-        let window = NSWindow(contentRect: area, styleMask: .borderless, backing: .buffered, defer: false)
+    private func captureArea(screen: NSScreen, displayID: CGDirectDisplayID, windows: [SCWindow]) -> CGRect {
+        let bounds = CGDisplayBounds(displayID)
+        let minimumHeight = bounds.height - screen.safeAreaInsets.top - 2
+        let fullscreen = windows.contains {
+            $0.isOnScreen && $0.windowLayer == 0 &&
+            $0.owningApplication?.processID != ProcessInfo.processInfo.processIdentifier &&
+            $0.frame.height >= minimumHeight &&
+            $0.frame.intersection(bounds).width > bounds.width * 0.2 &&
+            abs($0.frame.maxY - bounds.maxY) <= 2
+        }
+        return fullscreen ? screen.frame : screen.visibleFrame
+    }
+
+    private func refreshSpace() {
+        guard isActive, !resumeAfterWake else { return }
+        displayTask?.cancel()
+        displayTask = Task { [weak self] in
+            do {
+                try await Task.sleep(for: .milliseconds(400))
+                guard let self, self.isActive, let displayID = self.capturedDisplayID,
+                      let screen = NSScreen.screens.first(where: { ($0.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?.uint32Value == displayID }) else { return }
+                let currentSession = self.session
+                let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
+                guard !Task.isCancelled, self.session == currentSession else { return }
+                self.displayTask = nil
+                let area = self.captureArea(screen: screen, displayID: displayID, windows: content.windows)
+                if self.overlay?.frame != area {
+                    self.stop()
+                    await self.start()
+                } else {
+                    self.overlay?.orderFrontRegardless()
+                }
+            } catch { }
+        }
+    }
+
+    private func makeOverlay(screen: NSScreen, area: CGRect, renderer: DesktopRenderer) {
+        let window = DesktopPanel(contentRect: area, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
+        window.isFloatingPanel = true
+        window.becomesKeyOnlyIfNeeded = true
         window.title = "Hinge Desktop Overlay"
         window.level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.screenSaverWindow)))
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
