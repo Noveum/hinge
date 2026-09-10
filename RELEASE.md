@@ -1,6 +1,6 @@
 # Shipping Hinge
 
-Every push to `main` builds the app, saves the `Hinge-macOS` workflow artifact, and publishes a GitHub release with `Hinge.dmg` and its SHA-256 checksum. There are no test jobs.
+Every push to `main` builds the app, saves the `Hinge-macOS` workflow artifact, and publishes a GitHub release with `Hinge.dmg` and its SHA-256 checksum. The release waits for tracked-file policy, formatting, lint, link, and compilation checks. There are no test jobs.
 
 ## Local installer
 
@@ -22,4 +22,4 @@ The website's `/download` endpoint serves the current release's `Hinge.dmg`. It 
 
 Import the repository into Vercel with `web` as its root directory and `main` as its production branch. No build or install command is needed. Once connected, Vercel deploys future pushes automatically.
 
-The page is intentionally empty. Add the design and media to `web/index.html` and `web/assets/`. Connect a download link to `/download` to serve the latest release. For this private repository, configure a server-only `GITHUB_TOKEN` in Vercel with read-only Contents access to `Noveum/hinge`.
+The landing page lives in `web/index.html`, with styles and the illustrated preview in `web/assets/`. Its download button uses `/download` to serve the latest release. Replace the illustrated preview when the original demo video is available. For this private repository, configure a server-only `GITHUB_TOKEN` in Vercel with read-only Contents access to `Noveum/hinge`.

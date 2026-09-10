@@ -28,3 +28,5 @@ Allow Screen Recording, reopen Hinge if prompted, and turn it on. The starting a
 ## Got an idea?
 
 Feature requests are welcome. [Open an issue](https://github.com/Noveum/hinge/issues) or just shoot a PR. Small fixes, smoother motion, fun ideas: come play.
+
+[Development checks and setup](CHECKS.md).
