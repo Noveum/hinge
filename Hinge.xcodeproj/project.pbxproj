@@ -10,42 +10,6 @@
 	<string>56</string>
 	<key>objects</key>
 	<dict>
-		<key>0FAA19D55515F2C82516CEB3</key>
-		<dict>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>sourcecode.swift</string>
-			<key>path</key>
-			<string>BendModel.swift</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>0BC3004ACCD204AD3A55774B</key>
-		<dict>
-			<key>isa</key>
-			<string>PBXBuildFile</string>
-			<key>fileRef</key>
-			<string>0FAA19D55515F2C82516CEB3</string>
-		</dict>
-		<key>B208C7D6FFDF416385E4D0DF</key>
-		<dict>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>sourcecode.swift</string>
-			<key>path</key>
-			<string>BendyApp.swift</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>EB3912A4E832542BD85C7D90</key>
-		<dict>
-			<key>isa</key>
-			<string>PBXBuildFile</string>
-			<key>fileRef</key>
-			<string>B208C7D6FFDF416385E4D0DF</string>
-		</dict>
 		<key>D07A26CE17EABF394176C507</key>
 		<dict>
 			<key>isa</key>
@@ -63,6 +27,42 @@
 			<string>PBXBuildFile</string>
 			<key>fileRef</key>
 			<string>D07A26CE17EABF394176C507</string>
+		</dict>
+		<key>7D4CE7E1BC001883E3EDC613</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>HingeApp.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>5775BCD990F33DC63AF4963F</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+			<key>fileRef</key>
+			<string>7D4CE7E1BC001883E3EDC613</string>
+		</dict>
+		<key>97A67C54A25B904AD25CBA32</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.swift</string>
+			<key>path</key>
+			<string>LidMotion.swift</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>1A5512770BFACF9F16B16FF9</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+			<key>fileRef</key>
+			<string>97A67C54A25B904AD25CBA32</string>
 		</dict>
 		<key>75017C803F3BD9BCA2AD760F</key>
 		<dict>
@@ -160,9 +160,9 @@
 			<string>PBXGroup</string>
 			<key>children</key>
 			<array>
-				<string>0FAA19D55515F2C82516CEB3</string>
-				<string>B208C7D6FFDF416385E4D0DF</string>
 				<string>D07A26CE17EABF394176C507</string>
+				<string>7D4CE7E1BC001883E3EDC613</string>
+				<string>97A67C54A25B904AD25CBA32</string>
 				<string>75017C803F3BD9BCA2AD760F</string>
 				<string>4A57EFA62E37A174C03C000F</string>
 				<string>EEDE96C56CBAC202420A47BC</string>
@@ -206,7 +206,7 @@
 			<key>includeInIndex</key>
 			<string>0</string>
 			<key>path</key>
-			<string>Bendy Prototype.app</string>
+			<string>Hinge.app</string>
 			<key>sourceTree</key>
 			<string>BUILT_PRODUCTS_DIR</string>
 		</dict>
@@ -245,9 +245,9 @@
 			<string>2147483647</string>
 			<key>files</key>
 			<array>
-				<string>0BC3004ACCD204AD3A55774B</string>
-				<string>EB3912A4E832542BD85C7D90</string>
 				<string>66B44EC0ED7E54C4607D70F2</string>
+				<string>5775BCD990F33DC63AF4963F</string>
+				<string>1A5512770BFACF9F16B16FF9</string>
 				<string>4F87324F1438ABED37B95379</string>
 				<string>DAEA9D08F6B5E79A226FC00D</string>
 				<string>289C8D3C22097DA2A314830F</string>
@@ -311,11 +311,11 @@
 			<key>buildSettings</key>
 			<dict>
 				<key>PRODUCT_NAME</key>
-				<string>Bendy Prototype</string>
+				<string>Hinge</string>
 				<key>EXECUTABLE_NAME</key>
-				<string>BendyPrototype</string>
+				<string>Hinge</string>
 				<key>PRODUCT_BUNDLE_IDENTIFIER</key>
-				<string>local.bendy.prototype</string>
+				<string>local.hinge.app</string>
 				<key>INFOPLIST_FILE</key>
 				<string>Info.plist</string>
 				<key>GENERATE_INFOPLIST_FILE</key>
@@ -370,11 +370,11 @@
 			<key>buildSettings</key>
 			<dict>
 				<key>PRODUCT_NAME</key>
-				<string>Bendy Prototype</string>
+				<string>Hinge</string>
 				<key>EXECUTABLE_NAME</key>
-				<string>BendyPrototype</string>
+				<string>Hinge</string>
 				<key>PRODUCT_BUNDLE_IDENTIFIER</key>
-				<string>local.bendy.prototype</string>
+				<string>local.hinge.app</string>
 				<key>INFOPLIST_FILE</key>
 				<string>Info.plist</string>
 				<key>GENERATE_INFOPLIST_FILE</key>
@@ -443,9 +443,9 @@
 			<key>dependencies</key>
 			<array/>
 			<key>name</key>
-			<string>BendyPrototype</string>
+			<string>Hinge</string>
 			<key>productName</key>
-			<string>Bendy Prototype</string>
+			<string>Hinge</string>
 			<key>productReference</key>
 			<string>38A007151ABE87CC01A5B6E9</string>
 			<key>productType</key>

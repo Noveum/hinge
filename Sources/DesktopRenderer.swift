@@ -37,7 +37,7 @@ final class DesktopRenderer: NSObject, MTKViewDelegate {
         guard let sourceURL = resources.url(forResource: "Fold", withExtension: "metal") else {
             throw DesktopError.message("The desktop renderer is missing. Rebuild the app.")
         }
-        let library = try device.makeLibrary(source: String(contentsOf: sourceURL), options: nil)
+        let library = try device.makeLibrary(source: String(contentsOf: sourceURL, encoding: .utf8), options: nil)
         let descriptor = MTLRenderPipelineDescriptor()
         descriptor.vertexFunction = library.makeFunction(name: "foldVertex")
         descriptor.fragmentFunction = library.makeFunction(name: "foldFragment")

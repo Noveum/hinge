@@ -1,59 +1,44 @@
 # Motion reference
 
-Studied on September 10, 2026. The implementation targets the real macOS desktop effect, with a matching miniature preview.
+Reviewed on September 10, 2026 using the original downloaded videos and the user's two local screen recordings.
 
-## Reference files
+## Sources
 
-| Reference | Local file in the adjacent References folder | Duration |
+| Reference | File in the adjacent References folder | Duration |
 | --- | --- | --- |
-| [Bendy website](https://trybendy.app/) | website-demo.mp4 | 19.17 seconds, 1080 × 1920, 30 fps |
-| [Bendy launch post](https://x.com/adrianabelarde_/status/2097998552517759106) | launch-demo.mp4 | 33.02 seconds, 1920 × 1080, 30 fps |
-| Captured website scroll interaction | website-scroll.mp4 | About 8.12 seconds, 1280 × 720 |
-| [Expo Duo context](https://x.com/nater02/status/2097776349217771912) | expo-duo-demo.mp4 | About 10 seconds, 864 × 720 |
-| Bendy settings | settings.png | 1286 × 1126 |
+| [Bendy website](https://trybendy.app/) | website-demo.mp4 | 19.17 seconds, 1080 x 1920, 30 fps |
+| [Bendy launch post](https://x.com/adrianabelarde_/status/2097998552517759106) | launch-demo.mp4 | 33.02 seconds, 1920 x 1080, 30 fps |
+| Website scroll recording | website-scroll.mp4 | About 8.12 seconds, 1280 x 720 |
+| [Expo Duo context](https://x.com/nater02/status/2097776349217771912) | expo-duo-demo.mp4 | About 10 seconds, 864 x 720 |
 
-The website scroll recording is assembled from 100 browser captures at an average of about 12.3 captures per second. The original embedded videos preserve their source frame rate.
+The website scroll recording comprises 100 browser captures. The embedded videos preserve their original frame rates. The published expo-duo 0.0.0 archive contains only package metadata, with no implementation to port.
 
-## Complete sequence review
+## Native video
 
-The portrait website video begins partly closed. At roughly 0 to 3 seconds the lid opens and the desktop sharpens. At 4 to 7 seconds it closes almost completely. From 8 to 11 seconds it reopens. A second close happens around 12 to 15 seconds, followed by an open and clear around 16 to 19 seconds. The bottom edge remains readable much longer than the top.
+The portrait video opens around 0 to 3 seconds, closes around 4 to 7, reopens around 8 to 11, closes again around 12 to 15, and reopens around 16 to 19. Blur builds toward the top while the bottom remains readable longer.
 
-The landscape launch video shows three physical close/open cycles over approximately 0 to 23 seconds. A closer review at quarter-second intervals around 9 to 12 seconds shows that the desktop narrows progressively at the top while the base and Dock stay anchored. Blur increases before the lid approaches fully closed. The last roughly 24 to 33 seconds demonstrate the website's scroll-controlled miniature fold and its return.
+The landscape launch video contains three physical close/open cycles through approximately 23 seconds. Frames at 10.5 and 11.25 seconds show the key distinction: content still fills nearly the entire physical screen height. The top narrows mildly, the upper content blurs progressively, and dark corners deepen. The menu bar and Dock stay sharp and anchored. Some apparent perspective comes from the camera viewing the physical lid, so it must not be duplicated as software rotation.
 
-The Expo clip shows the folding device and layout transitions. The published `expo-duo` 0.0.0 archive contains only `package.json`; it has no source, entry-point implementation, or native module to port. It serves as visual context rather than a code dependency.
+The final portion of that video shows a separate website miniature. Its 72-degree rotation, 1400-pixel perspective, and large top-edge fade create an intentionally collapsing card. Earlier prototype versions incorrectly transferred that geometry to the real desktop. The user's 9:57 PM recording makes the resulting mismatch clear: a large black area opens above a heavily compressed desktop.
 
-## Measured website behavior
+## Current reconstruction
 
-These values are observable in the public website's animation code:
+The new projection keeps the top and bottom edges at their original height. Its homogeneous horizontal taper grows from zero to a maximum top-edge inset of approximately 11.5 percent on each side. This is a visual approximation of the native footage, not a recovered native coefficient.
 
-| Component | Website behavior | Native implementation |
-| --- | --- | --- |
-| Fold drive | Scroll travel of 900 pixels, normalized and smoothstepped | Physical lid angle normalized below the clear threshold |
-| Projection | Perspective 1400 pixels, maximum X rotation 72 degrees | Bottom-anchored homogeneous projection with the same aspect-scaled perspective and maximum angle |
-| Anchor | Horizontal center, bottom edge | Both bottom corners remain fixed |
-| Easing | Progress interpolation by 0.08 each browser frame | Time-based smoothing on the live render loop |
-| Blur | Three layers at 6, 16, and 36 pixels | Three masked blur bands in SwiftUI; weighted GPU sampling in Metal |
-| Blur falloff | Bands fade by 75%, 52%, and 34% of image height | Matching band boundaries |
-| Feathering | Top edge expands to 22% of image height | Progressive top mask plus a small edge falloff |
-| Shadows | Two dark top corners and a top-to-bottom shade | Matching directional shading, adjustable strength |
-| Clear state | Zero fold, zero progressive blur and shadow | Overlay removed so the actual desktop is visible |
+Three cached Gaussian blur levels at nominal widths of 6, 16, and 36 pixels per 786-pixel reference width provide continuous progressive blur. Blur strength varies with closure and fades toward the lower tenth of the desktop. Subtle top-corner shading and side feathering complete the single effect.
 
-## Native motion and controls
+The effect covers the built-in screen's usable desktop area, excluding the normal menu bar and Dock. The native video supports keeping these elements stationary. Auto-hidden system UI and fullscreen layouts may change the available area.
 
-The physical hinge is read at 30 Hz with an IOKit HID feature report. Live desktop capture and rendering target 60 Hz. Smoothing is based on elapsed time, so its feel is not tied to a particular refresh rate.
+## Motion timing
 
-The clear threshold defaults to 110 degrees and is adjustable from 70 to 135 degrees. Full folding approaches 8 degrees. A smoothstep curve normalizes the interval. These thresholds are prototype tuning choices; the reference does not expose its complete native mapping.
+The current comfortable open position is measured when enabling Hinge. An explicit calibration button handles later adjustments. The baseline does not move downward while the user holds the lid partly closed. It is retained across sleep and reinitialization of the capture stream.
 
-The desktop demo has a one-second open hold, a 2.4-second close to 12 degrees, a 0.6-second closed hold, a 1.8-second open, and a final one-second settle. Manual control interrupts the miniature preview. The lid-driven effect follows the physical movement rather than playing a fixed timeline.
+Closure is mapped linearly from that baseline to eight degrees with a 0.75-degree deadband at rest. A single 12 ms exponential filter softens integer sensor steps. There is no spring, fixed playback timeline, or additional SwiftUI animation in the motion path.
 
-Silk uses the baseline blur and shade. Shade increases corner shading and reduces blur. Frost increases blur and adds a slight pale tint at the top. The exact native preset coefficients are not public, so these are visual approximations guided by the settings screenshot and videos.
+The sensor targets 120 samples per second on a dedicated queue. MTKView schedules drawing at the display refresh rate, up to 120 Hz. Captured content arrives separately at up to 60 fps. Each newly captured frame generates cached GPU blur levels; lid movement only changes the final projection and blur blend. The renderer reuses the latest content and does not wait for a new capture frame to move.
 
-The source website clicks at a closing threshold. Its product description says the macOS app clicks when opening clears the desktop. This prototype follows the macOS description and reuses the site's downloaded click sound for local comparison.
+The prior 85 ms filter alone took about 255 ms to approach 95 percent of a new target. A 12 ms filter takes about 36 ms. These figures describe the filter response, not measured physical end-to-end latency, which also includes the sensor, GPU, and display.
 
-## Implementation references
+## Implementation reference
 
-- [Bendy](https://trybendy.app/): public demo, settings reference, and web projection behavior.
-- [LidAngleSensor](https://github.com/samhenrigold/LidAngleSensor): HID sensor identifiers and feature-report layout. The prototype reads the little-endian angle directly through IOKit.
-- [expo-duo package metadata](https://registry.npmjs.org/expo-duo): inspected 0.0.0 package contents.
-
-No claim of exact native shader equivalence is made. The original application's private renderer was not available. The prototype independently recreates the observable motion with adjustable parameters.
+[LidAngleSensor](https://github.com/samhenrigold/LidAngleSensor) supplies the observed HID identifiers and feature-report layout. Hinge reads the little-endian angle through IOKit. Exact native Bendy shader parameters and sensor timing remain unavailable.
