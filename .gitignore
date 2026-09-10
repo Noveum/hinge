@@ -2,9 +2,8 @@ build/
 .DS_Store
 xcuserdata/
 *.xcuserstate
-web/node_modules/
-web/.next/
-web/next-env.d.ts
-web/*.tsbuildinfo
 web/.env*
 !web/.env.example
+
+dist/
+web/.vercel/

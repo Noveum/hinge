@@ -1,12 +1,17 @@
-# Hinge website
+# Website
+
+`index.html` is intentionally blank. Put images, videos, styles, and scripts in `assets/`. No framework, dependencies, or build step.
+
+## Deploy once, then just push
+
+Import `Noveum/hinge` into Vercel, choose `web` as the root directory, and use `main` as the production branch. The included configuration selects a plain static site. Every subsequent push to `main` deploys automatically through Vercel's Git integration; branches get preview deployments.
+
+For downloads from this private repository, add a server-only `GITHUB_TOKEN` environment variable in Vercel with read-only Contents access to `Noveum/hinge`. A future download button can link to `/download`. The endpoint redirects to the latest release's `Hinge.dmg` without exposing the token or sending the installer through a function response.
+
+To preview only the HTML locally:
 
 ```sh
-npm install
-npm run dev
+python3 -m http.server 8080 --directory web
 ```
 
-For Vercel, choose `web` as the root directory. The page follows the system theme automatically.
-
-Set `GITHUB_TOKEN` to a fine-grained token with read-only Contents access to `Noveum/hinge`. The download route serves the latest release's `Hinge.dmg`, keeping the token on the server. Until that release exists, downloads return a short unavailable message.
-
-Set `DEMO_VIDEO_URL` to the URL of the final recording, or add the recording to `public/demo.mp4` and use `/demo.mp4`. Until then, the page shows an illustrated animation.
+Use Vercel's local development command when working on the download endpoint.
