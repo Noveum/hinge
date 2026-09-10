@@ -20,17 +20,18 @@ make build
 
 The command writes the app to `build/Hinge.app`. Requires an Apple silicon MacBook, macOS 14 or later, and Xcode for building. The build targets arm64. The undocumented hinge sensor is not available on every MacBook model.
 
-## Version 0.3
+## Version 0.4
 
-- Replaces the collapsing website miniature projection with the full-height treatment observed in the native reference video.
-- Reads the sensor on a dedicated queue targeting 120 Hz. The display drives rendering, up to 120 Hz on supported displays.
-- Reduces motion smoothing from 85 ms to 12 ms, enough to soften integer-degree sensor steps without a long trailing animation.
-- Precomputes three Gaussian blur levels on the GPU when a new desktop frame arrives. Each output pixel blends two samples instead of repeatedly sampling dozens of blur offsets.
-- Keeps the menu bar and Dock outside the effect in the normal desktop layout.
-- Removes the settings preview, custom styles, sound, manual angle sliders, and Escape shortcut.
+- Smooths whole-degree lid readings into continuous movement with bounded prediction and a small noise band.
+- Prevents small backward movements between repeated readings while the lid is closing or opening.
+- Uses stronger smoothing for slow movement and responds faster to quick movement.
+- Prepares the GPU blur pipeline and waits for the first captured frame before showing On.
+- Keeps a transparent rendering surface ready at rest and blends into the effect during the first few degrees.
+
+The animation uses the full-height treatment observed in the native reference video. The normal menu bar and Dock remain outside the effect. The sensor runs on a dedicated queue targeting 120 Hz, and the display drives rendering at up to 120 Hz.
 
 Capture targets 60 fps at up to 2400 pixels wide. Animation can continue at the display refresh rate independently of captured frame arrival. Rendering pauses completely at the open position. The overlay is excluded from capture and passes input through to the desktop.
 
 Frames stay in memory. No audio is captured, and no frames are saved or uploaded. Protected windows may appear black. The effect applies to the built-in display.
 
-Swift and Metal compilation are checked locally. A six-second synthetic rendering check produced 699 frames at a 3024 x 1800 drawable size without GPU errors. After startup, mean frame spacing was 8.33 ms and the 95th percentile was 9.10 ms. These measurements cover rendering, not physical sensor latency. Physical lid responsiveness and sleep/wake behavior require a hardware trial. The native reference's private renderer is unavailable, so its exact coefficients cannot be verified. See `MOTION.md` for the reference analysis.
+Swift and Metal compilation are checked locally. Deterministic replays cover whole-degree input at 30, 60, and 120 Hz, slow and fast movement, alternating adjacent readings while held, and reopening. These checks verify the estimator and rendering path, not physical end-to-end latency. Physical lid responsiveness and sleep/wake behavior still require a hardware trial. The native reference's private renderer is unavailable, so its exact coefficients cannot be verified. See `MOTION.md` for the reference analysis.

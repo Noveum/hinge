@@ -33,11 +33,19 @@ The effect covers the built-in screen's usable desktop area, excluding the norma
 
 The current comfortable open position is measured when enabling Hinge. An explicit calibration button handles later adjustments. The baseline does not move downward while the user holds the lid partly closed. It is retained across sleep and reinitialization of the capture stream.
 
-Closure is mapped linearly from that baseline to eight degrees with a 0.75-degree deadband at rest. A single 12 ms exponential filter softens integer sensor steps. There is no spring, fixed playback timeline, or additional SwiftUI animation in the motion path.
+The input is a stream of integer-degree readings. A 0.6-degree noise band prevents alternating adjacent readings from constantly moving the target. Angular velocity is estimated with a 60 ms time constant. Prediction looks ahead by 35 ms and is limited to 0.75 degrees. Closure is mapped from the calibrated baseline toward eight degrees.
+
+A critically damped second-order filter maintains continuous position and velocity. Its response increases from 30 to 55 radians per second as estimated motion speeds up. The output keeps its direction between readings until the sensor indicates a reversal. This avoids small backward corrections from decaying predictions. Long gaps between rendered frames reset the integration step, preventing an initial jump after resting.
+
+There is no fixed playback timeline or additional SwiftUI animation in the motion path. The speed-dependent smoothing follows the general principle described by the [1 Euro filter authors](https://github.com/casiez/OneEuroFilter), using stronger smoothing at low speeds. The implementation uses a damped second-order response rather than that library's first-order filter.
 
 The sensor targets 120 samples per second on a dedicated queue. MTKView schedules drawing at the display refresh rate, up to 120 Hz. Captured content arrives separately at up to 60 fps. Each newly captured frame generates cached GPU blur levels; lid movement only changes the final projection and blur blend. The renderer reuses the latest content and does not wait for a new capture frame to move.
 
-The prior 85 ms filter alone took about 255 ms to approach 95 percent of a new target. A 12 ms filter takes about 36 ms. These figures describe the filter response, not measured physical end-to-end latency, which also includes the sensor, GPU, and display.
+The previous 12 ms first-order filter followed individual degree changes too closely. High rendering frame rates did not eliminate the visible stair-step input. Version 0.4 filters position and velocity together and suppresses quantization jitter. A synthetic replay checks slow and fast closure at 30, 60, and 120 input samples per second, held adjacent-degree noise, and reopening.
+
+Before On appears, an offscreen GPU pass initializes the blur textures, Gaussian kernels, and fold pipeline, and capture supplies its first frame. A transparent window stays ordered at rest with drawing paused, so closing does not need to allocate a new window surface. The first 2.5 percent of closure smoothly blends the captured image into the live desktop. At full reopening, a transparent frame is presented before drawing pauses.
+
+These checks do not measure physical end-to-end latency, which also depends on the sensor, capture, GPU, and display.
 
 ## Implementation reference
 
