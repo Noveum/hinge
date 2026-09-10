@@ -4,7 +4,7 @@ A local macOS app that applies a soft perspective and progressive blur to your a
 
 ## Run
 
-Open the adjacent **Hinge.app**. Put your lid at a comfortable viewing angle and turn **On**. Allow Screen Recording if macOS asks, then quit and reopen Hinge if required.
+Build the app using the instructions below, then open **build/Hinge.app**. Put your lid at a comfortable viewing angle and turn **On**. Allow Screen Recording if macOS asks, then quit and reopen Hinge if required.
 
 The current angle becomes the open position each time you turn it on. Use **Set open position** after adjusting your normal viewing angle. Closing the settings window leaves Hinge in the menu bar. Turn it off or quit from there.
 
@@ -12,13 +12,13 @@ There is one effect and two controls. No demo playback, alternate styles, sound,
 
 ## Build
 
-Open `Hinge.xcodeproj`, select **Hinge**, and run on **My Mac**. No package dependencies or developer account are required. Alternatively:
+Clone this repository, open `Hinge.xcodeproj`, select **Hinge**, and run on **My Mac**. No package dependencies or developer account are required. Alternatively, from the repository directory:
 
 ```sh
 make build
 ```
 
-The app is written to `build/Hinge.app`. Requires an Apple silicon MacBook, macOS 14 or later, and Xcode for building. The supplied binary is arm64. The undocumented hinge sensor is not available on every MacBook model.
+The command writes the app to `build/Hinge.app`. Requires an Apple silicon MacBook, macOS 14 or later, and Xcode for building. The build targets arm64. The undocumented hinge sensor is not available on every MacBook model.
 
 ## Version 0.3
 

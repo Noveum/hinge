@@ -1,10 +1,10 @@
 # Motion reference
 
-Reviewed on September 10, 2026 using the original downloaded videos and the user's two local screen recordings.
+Reviewed on September 10, 2026 using the original downloaded videos and local prototype recordings. Recordings are not included in this repository.
 
 ## Sources
 
-| Reference | File in the adjacent References folder | Duration |
+| Reference | Reviewed media | Duration |
 | --- | --- | --- |
 | [Bendy website](https://trybendy.app/) | website-demo.mp4 | 19.17 seconds, 1080 x 1920, 30 fps |
 | [Bendy launch post](https://x.com/adrianabelarde_/status/2097998552517759106) | launch-demo.mp4 | 33.02 seconds, 1920 x 1080, 30 fps |
@@ -19,7 +19,7 @@ The portrait video opens around 0 to 3 seconds, closes around 4 to 7, reopens ar
 
 The landscape launch video contains three physical close/open cycles through approximately 23 seconds. Frames at 10.5 and 11.25 seconds show the key distinction: content still fills nearly the entire physical screen height. The top narrows mildly, the upper content blurs progressively, and dark corners deepen. The menu bar and Dock stay sharp and anchored. Some apparent perspective comes from the camera viewing the physical lid, so it must not be duplicated as software rotation.
 
-The final portion of that video shows a separate website miniature. Its 72-degree rotation, 1400-pixel perspective, and large top-edge fade create an intentionally collapsing card. Earlier prototype versions incorrectly transferred that geometry to the real desktop. The user's 9:57 PM recording makes the resulting mismatch clear: a large black area opens above a heavily compressed desktop.
+The final portion of that video shows a separate website miniature. Its 72-degree rotation, 1400-pixel perspective, and large top-edge fade create an intentionally collapsing card. Earlier prototype versions incorrectly transferred that geometry to the real desktop. Local prototype recordings showed the resulting mismatch: a large black area opened above a heavily compressed desktop.
 
 ## Current reconstruction
 
