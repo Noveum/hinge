@@ -247,7 +247,8 @@ final class LiveDesktop: NSObject, ObservableObject {
         window.orderFrontRegardless()
         view.draw()
         let link = view.displayLink(target: self, selector: #selector(drawFrame(_:)))
-        let refresh = Float(min(max(screen.maximumFramesPerSecond, 60), 120))
+        let refresh = Float(min(max(screen.maximumFramesPerSecond, 1), 60))
+        view.preferredFramesPerSecond = Int(refresh)
         link.preferredFrameRateRange = CAFrameRateRange(minimum: refresh, maximum: refresh, preferred: refresh)
         link.isPaused = true
         link.add(to: .main, forMode: .common)

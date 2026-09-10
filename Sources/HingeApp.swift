@@ -15,7 +15,7 @@ struct HingeApp: App {
         .windowResizability(.contentSize)
         .defaultPosition(.center)
         .commands {
-            CommandGroup(replacing: .appInfo) { Text("Hinge 0.4") }
+            CommandGroup(replacing: .appInfo) { Text("Hinge 0.5") }
         }
         MenuBarExtra("Hinge", systemImage: desktop.isActive ? "laptopcomputer.and.arrow.down" : "laptopcomputer") {
             HingeMenu(desktop: desktop)
