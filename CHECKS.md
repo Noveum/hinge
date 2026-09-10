@@ -1,6 +1,6 @@
 # Repository checks
 
-Pull requests run the same checks that gate releases from `main`. No test cases or test jobs are included.
+Pull requests run the same checks that gate releases from `main`. No test cases or test jobs are included. After publishing, CI verifies that every public website asset matches the pushed files, video seeking works, and the download matches the released installer checksum. Vercel receives up to four minutes to finish deploying.
 
 | Files | Checks |
 | --- | --- |

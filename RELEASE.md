@@ -23,3 +23,5 @@ The website's `/download` endpoint serves the current release's `Hinge.dmg`. It 
 Import the repository into Vercel with `web` as its root directory and `main` as its production branch. No build or install command is needed. Once connected, Vercel deploys future pushes automatically.
 
 The landing page lives in `web/index.html`, with styles and the original demo recording in `web/assets/`. Its download button uses `/download` to serve the latest release. For this private repository, configure a server-only `GITHUB_TOKEN` in Vercel with read-only Contents access to `Noveum/hinge`.
+
+CI finishes by checking the deployed website assets, video seeking, and the public installer checksum against the new release. Deployment failures leave a failed workflow instead of a false success.

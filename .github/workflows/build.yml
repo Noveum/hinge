@@ -49,3 +49,5 @@ jobs:
           gh release create "$tag" --target "$GITHUB_SHA" --title "Hinge $version" --notes-file "$RUNNER_TEMP/release-notes.md" --draft
           gh release upload "$tag" dist/Hinge.dmg dist/Hinge.dmg.sha256
           gh release edit "$tag" --draft=false --latest
+      - name: Verify public website and installer
+        run: python3 scripts/verify-deployment.py
