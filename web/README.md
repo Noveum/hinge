@@ -2,6 +2,8 @@
 
 `index.html` is intentionally blank. Put images, videos, styles, and scripts in `assets/`. No framework, dependencies, or build step.
 
+Live at [hinge.noveum.ai](https://hinge.noveum.ai/). The app download is [hinge.noveum.ai/download](https://hinge.noveum.ai/download).
+
 ## Deploy once, then just push
 
 Import `Noveum/hinge` into Vercel, choose `web` as the root directory, and use `main` as the production branch. The included configuration selects a plain static site. Every subsequent push to `main` deploys automatically through Vercel's Git integration; branches get preview deployments.
