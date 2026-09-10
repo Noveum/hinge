@@ -57,6 +57,28 @@ final class BendModel: ObservableObject {
     @Published var completedBends = 0
     var playback: Task<Void, Never>?
     var sound: NSSound?
+    private let sensor = LidSensor()
+
+    init() {
+        sensor.onAngle = { [weak self] value in
+            guard let self else { return }
+            self.sensorAngle = value
+            if self.followLid, !self.isPlaying, let value {
+                withAnimation(.linear(duration: 0.07)) { self.angle = value }
+            }
+        }
+        DispatchQueue.main.async { [weak self] in self?.sensor.start() }
+    }
+
+    func reconnectSensor() {
+        sensor.stop()
+        sensor.start()
+    }
+
+    func shutDown() {
+        stop()
+        sensor.stop()
+    }
 
     var progress: Double { isEnabled ? BendMath.progress(angle: angle, clearAngle: clearAngle) : 0 }
 
