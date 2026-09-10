@@ -2,6 +2,8 @@
 
 A local macOS app that bends your actual desktop as you close your MacBook lid. SwiftUI provides the controls and preview. ScreenCaptureKit streams the built-in display into a Metal overlay, driven by the lid's HID sensor.
 
+Version 0.2 fixes frozen frame presentation, keeps the settings window visible during the effect, and allows ordinary screen recordings to show the animation.
+
 ## Run
 
 Open the supplied **Bendy Prototype.app**. Select **Enable on my Mac**, allow Screen Recording when macOS asks, then reopen the app if requested. Enable it again and move the lid.
@@ -39,10 +41,10 @@ Requirements: Apple silicon MacBook, macOS 14 or later, and Xcode for building. 
 
 The live effect uses a bottom-anchored perspective projection, progressive blur, top-corner shadows, and a feathered top edge. Capture runs at up to 60 frames per second and 2400 pixels wide. The effect applies to the built-in display; external displays remain unchanged.
 
-The app excludes its own windows from capture to avoid feedback. While the overlay is visible, the settings window is therefore absent from the captured desktop. Input passes through the overlay. Protected content may be black in captured frames.
+The overlay is excluded from its own capture to avoid feedback. The settings window is included and bends with the other desktop windows. Input passes through the overlay. Protected content may be black in captured frames.
 
 No audio is captured. Desktop frames are held in memory and are never written to disk or uploaded. No account, license server, analytics, or network requests are part of the desktop effect.
 
-Swift and Metal compilation completed. Physical lid movement, Screen Recording authorization, and sleep/wake behavior are left for the user's test.
+Swift and Metal compilation completed. The repaired rendering path presented 300 synthetic frames on 300 distinct drawables without GPU errors. Physical lid movement and sleep/wake behavior are left for the user's test.
 
 The adjacent `References` folder contains the downloaded reference videos, a recording of the website scroll interaction, and the original settings screenshot. See `MOTION.md` for the animation breakdown.

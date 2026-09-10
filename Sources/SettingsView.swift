@@ -83,7 +83,7 @@ struct SettingsView: View {
                 Image(systemName: "laptopcomputer").font(.system(size: 15))
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Bendy").font(.system(size: 13, weight: .semibold))
-                    Text("Local prototype · 0.1").font(.system(size: 10)).foregroundStyle(.white.opacity(0.5))
+                    Text("Local prototype · 0.2").font(.system(size: 10)).foregroundStyle(.white.opacity(0.5))
                 }
             }.padding(12)
         }
@@ -267,7 +267,7 @@ struct SettingsView: View {
                 .multilineTextAlignment(.center).lineSpacing(5).padding(.top, 4)
             Link("Reference: trybendy.app", destination: URL(string: "https://trybendy.app/")!)
                 .font(.system(size: 12)).padding(.top, 12)
-            Text("Version 0.1 · Local build")
+            Text("Version 0.2 · Local build")
                 .font(.system(size: 11)).foregroundStyle(.white.opacity(0.4))
         }.frame(maxWidth: .infinity)
     }

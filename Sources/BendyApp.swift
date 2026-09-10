@@ -20,7 +20,7 @@ struct BendyPrototypeApp: App {
         .defaultPosition(.center)
         .commands {
             CommandGroup(replacing: .appInfo) {
-                Text("Bendy Prototype 0.1")
+                Text("Bendy Prototype 0.2")
             }
         }
         MenuBarExtra("Bendy", systemImage: desktop.isActive ? "laptopcomputer.and.arrow.down" : "laptopcomputer") {
