@@ -265,19 +265,10 @@ final class LiveDesktop: NSObject, ObservableObject {
     }
   }
 
-  private func captureArea(screen: NSScreen, displayID: CGDirectDisplayID, windows: [SCWindow])
+  private func captureArea(screen: NSScreen, displayID _: CGDirectDisplayID, windows _: [SCWindow])
     -> CGRect
   {
-    let bounds = CGDisplayBounds(displayID)
-    let minimumHeight = bounds.height - screen.safeAreaInsets.top - 2
-    let fullscreen = windows.contains {
-      $0.isOnScreen && $0.windowLayer == 0
-        && $0.owningApplication?.processID != ProcessInfo.processInfo.processIdentifier
-        && $0.frame.height >= minimumHeight
-        && $0.frame.intersection(bounds).width > bounds.width * 0.2
-        && abs($0.frame.maxY - bounds.maxY) <= 2
-    }
-    return fullscreen ? screen.frame : screen.visibleFrame
+    screen.frame
   }
 
   private func refreshSpace(attempt: Int = 0) {
