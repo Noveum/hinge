@@ -1,4 +1,4 @@
-name: Build Hinge
+name: Release Hinge
 
 on:
   push:
@@ -6,11 +6,11 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
-  group: hinge-build-${{ github.ref }}
-  cancel-in-progress: true
+  group: hinge-release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   macos:
@@ -23,7 +23,7 @@ jobs:
           HINGE_BUILD_NUMBER: ${{ github.run_number }}
         run: scripts/package.sh
       - name: Save installer
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Hinge-macOS
           path: |
@@ -31,3 +31,18 @@ jobs:
             dist/Hinge.dmg.sha256
           if-no-files-found: error
           retention-days: 30
+      - name: Publish latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          version="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' Info.plist)"
+          tag="v${version}-${GITHUB_RUN_NUMBER}.${GITHUB_RUN_ATTEMPT}"
+          cat > "$RUNNER_TEMP/release-notes.md" <<'NOTES'
+          Download Hinge.dmg, open it, and drag Hinge into Applications.
+
+          Apple silicon MacBook, macOS 14 or later, and a supported lid sensor required. Allow Screen Recording when prompted. This prototype is not notarized; macOS may require approving it under Privacy & Security before first launch.
+          NOTES
+          gh release create "$tag" --target "$GITHUB_SHA" --title "Hinge $version" --notes-file "$RUNNER_TEMP/release-notes.md" --draft
+          gh release upload "$tag" dist/Hinge.dmg dist/Hinge.dmg.sha256
+          gh release edit "$tag" --draft=false --latest

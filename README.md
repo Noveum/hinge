@@ -12,7 +12,9 @@ ScreenCaptureKit supplies your live desktop, and Metal adds perspective and prog
 
 Requires an Apple silicon MacBook with a supported lid sensor and macOS 14 or later.
 
-For now, clone the repo and build with Xcode:
+[Download the latest installer](https://github.com/Noveum/hinge/releases/latest), open the DMG, and drag Hinge into Applications. This prototype is not notarized; macOS may ask you to approve it under Privacy & Security.
+
+Prefer building it yourself? Grab Xcode, then:
 
 ```sh
 git clone https://github.com/Noveum/hinge.git
