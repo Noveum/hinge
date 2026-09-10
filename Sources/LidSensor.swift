@@ -68,6 +68,7 @@ final class LidSensor {
   private func disconnect() {
     connection?.cancel()
     connection = nil
+    onAngle?(nil)
   }
 
   deinit {

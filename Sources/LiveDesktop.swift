@@ -66,7 +66,7 @@ final class LiveDesktop: NSObject, ObservableObject {
         guard let self else { return }
         if update.availabilityChanged {
           self.sensorAvailable = update.available
-          if !update.available, self.isActive {
+          if !update.available, self.isActive || self.isStarting {
             self.stop()
             self.error = "The lid sensor stopped responding. Turn Hinge on again to reconnect."
           }
@@ -216,6 +216,10 @@ final class LiveDesktop: NSObject, ObservableObject {
         try await Task.sleep(for: .milliseconds(10))
       }
       guard self.session == session else { return }
+      guard sensorAvailable else {
+        throw DesktopError.message(
+          "The lid sensor is unavailable. Turn Hinge on again to reconnect.")
+      }
       motion.setEnabled(true)
       isActive = true
       isStarting = false
@@ -276,9 +280,10 @@ final class LiveDesktop: NSObject, ObservableObject {
     return fullscreen ? screen.frame : screen.visibleFrame
   }
 
-  private func refreshSpace() {
+  private func refreshSpace(attempt: Int = 0) {
     guard isActive, !resumeAfterWake else { return }
     displayTask?.cancel()
+    let refreshSession = session
     displayTask = Task { [weak self] in
       do {
         try await Task.sleep(for: .milliseconds(400))
@@ -300,7 +305,19 @@ final class LiveDesktop: NSObject, ObservableObject {
         } else {
           self.overlay?.orderFrontRegardless()
         }
-      } catch {}
+      } catch {
+        guard let self, !Task.isCancelled, self.session == refreshSession, self.isActive else {
+          return
+        }
+        self.displayTask = nil
+        if attempt < 2 {
+          self.refreshSpace(attempt: attempt + 1)
+        } else {
+          self.stop()
+          self.error =
+            "Could not update the desktop after switching Spaces. Turn Hinge on to retry."
+        }
+      }
     }
   }
 
@@ -383,11 +400,18 @@ final class LiveDesktop: NSObject, ObservableObject {
   }
 
   private func resumeFromSleep() {
+    guard !isActive, !isStarting, wakeTask == nil else { return }
     sensor.reconnect()
-    guard resumeAfterWake, wakeTask == nil else { return }
+    guard resumeAfterWake else { return }
     wakeTask = Task { [weak self] in
-      do { try await Task.sleep(for: .seconds(1)) } catch { return }
-      guard let self, self.resumeAfterWake, !Task.isCancelled else { return }
+      guard let self else { return }
+      for _ in 0..<5 {
+        do { try await Task.sleep(for: .seconds(1)) } catch { return }
+        guard self.resumeAfterWake, !Task.isCancelled else { return }
+        if self.sensorAvailable { break }
+        self.sensor.reconnect()
+      }
+      guard self.resumeAfterWake, !Task.isCancelled else { return }
       self.wakeTask = nil
       self.resumeAfterWake = false
       await self.start()

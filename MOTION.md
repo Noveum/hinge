@@ -50,3 +50,7 @@ These checks do not measure physical end-to-end latency, which also depends on t
 ## Implementation reference
 
 [LidAngleSensor](https://github.com/samhenrigold/LidAngleSensor) supplies the observed HID identifiers and feature-report layout. Hinge reads the little-endian angle through IOKit. Exact native Bendy shader parameters and sensor timing remain unavailable.
+
+## Recovery
+
+Sensor loss cancels both startup and active capture. Switching Spaces retries a failed capture lookup twice before showing a recoverable error. Wake recovery waits up to five seconds for the sensor, and duplicate wake notifications do not interrupt an active session. Turning Hinge off cancels pending recovery.
