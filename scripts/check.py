@@ -59,6 +59,16 @@ def text_files():
             if not data.startswith(b"icns"):
                 raise ValueError(f"{path}: invalid icon signature")
             continue
+        signatures = {
+            "web/assets/demo.mp4": (4, b"ftyp"),
+            "web/assets/demo-poster.jpg": (0, b"\xff\xd8\xff"),
+            "web/assets/og.png": (0, b"\x89PNG\r\n\x1a\n"),
+        }
+        if path.as_posix() in signatures:
+            offset, signature = signatures[path.as_posix()]
+            if data[offset : offset + len(signature)] != signature:
+                raise ValueError(f"{path}: invalid media signature")
+            continue
         try:
             yield path, data.decode("utf-8")
         except UnicodeDecodeError as error:
@@ -152,7 +162,7 @@ def policy():
                 errors.append(f"{path}: invalid XML: {error}")
     if errors:
         raise ValueError("\n".join(errors))
-    print(f"Policy passed for {count} tracked text files and the classified icon asset")
+    print(f"Policy passed for {count} tracked text files and classified binary assets")
 
 
 def biome():
@@ -209,6 +219,8 @@ def links():
             str(ROOT / "web"),
             "--remap",
             r"[f]ile://.*/web/download$ https://hinge.noveum.ai/download",
+            "--remap",
+            rf"[h]ttps://hinge\.noveum\.ai/assets/(.*) {(ROOT / 'web/assets').as_uri()}/$1",
             *files,
         ]
     )

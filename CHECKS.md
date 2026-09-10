@@ -13,13 +13,13 @@ Pull requests run the same checks that gate releases from `main`. No test cases 
 | Workflows and YAML | [actionlint](https://github.com/rhysd/actionlint) and [yamllint](https://yamllint.readthedocs.io/) |
 | JSON, TOML and Xcode XML | Parsing, plus plist validation on macOS |
 | Links in every tracked text file | [Lychee](https://lychee.cli.rs/) local-file and external-link checks |
-| App icon | Explicit binary classification and ICNS signature validation |
+| App icon and website media | Explicit binary classification and file signature validation |
 
 The file list comes from `git ls-files`, not a source-folder glob. Unknown file types and unclassified binary files fail the policy check. The generated npm lockfile is parsed and policy-checked, while Biome leaves its generated formatting intact.
 
 Comments in Markdown code fences and workflow shell blocks are checked too. Executable shebangs and compiler preprocessor directives remain allowed because they affect execution. Prose documentation and string literals are not code comments.
 
-The link checker excludes historical X posts that require interactive access, runtime GitHub API URL templates that require authentication, and the Apple plist DTD identifier. The public `/download` endpoint remains checked. The exact exclusions are in `.lychee.toml`.
+The link checker excludes historical X posts that require interactive access, runtime GitHub API URL templates that require authentication, and the Apple plist DTD identifier. The public `/download` endpoint remains checked. Absolute website asset URLs resolve against local tracked assets so new media can pass before deployment. The exact exclusions are in `.lychee.toml`.
 
 ## Run locally
 
