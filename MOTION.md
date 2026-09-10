@@ -25,7 +25,7 @@ The final portion of that video shows a separate website miniature. Its 72-degre
 
 The new projection keeps the top and bottom edges at their original height. Its homogeneous horizontal taper grows from zero to a maximum top-edge inset of approximately 11.5 percent on each side. This is a visual approximation of the native footage, not a recovered native coefficient.
 
-Three cached Gaussian blur levels at nominal widths of 6, 16, and 36 pixels per 786-pixel reference width provide continuous progressive blur. Blur strength varies with closure and fades toward the lower tenth of the desktop. Subtle top-corner shading and side feathering complete the single effect.
+Three cached Gaussian blur levels at nominal widths of 6, 16, and 36 pixels per 786-pixel reference width provide continuous progressive blur. Blur strength varies with closure and fades toward the lower tenth of the desktop. Subtle top-corner shading and side feathering complete the single effect. The side gaps extend the nearest desktop edge using the cached broad blur texture, with a soft blend into the folded image. An inverse projection in the fragment shader preserves the fold geometry while covering the full overlay. This adds no capture, blur pass, or intermediate texture.
 
 The effect covers the built-in screen's usable desktop area, excluding the normal menu bar and Dock. The native video supports keeping these elements stationary. Auto-hidden system UI and fullscreen layouts may change the available area.
 
