@@ -91,9 +91,10 @@ final class LidMotion {
             displayVelocity = 0
             return 0
         }
-        let delta = lastFrame > 0 ? min(max(time - lastFrame, 0), 0.05) : 1.0 / 120
+        let elapsed = time - lastFrame
+        let delta = lastFrame > 0 && elapsed < 0.1 ? min(max(elapsed, 0), 0.025) : 1.0 / 120
         lastFrame = time
-        let frequency = 45.0
+        let frequency = 30 + min(abs(angularVelocity) * 0.55, 25)
         let offset = displayed - target
         let travel = (displayVelocity + frequency * offset) * delta
         let decay = exp(-frequency * delta)
@@ -104,7 +105,8 @@ final class LidMotion {
             displayed = previous
             displayVelocity = 0
         }
-        if abs(displayed - target) < 0.00001, abs(displayVelocity) < 0.0001 {
+        let canSettle = direction == 0 || (direction > 0 && target >= displayed) || (direction < 0 && target <= displayed)
+        if canSettle, abs(displayed - target) < 0.00001, abs(displayVelocity) < 0.0001 {
             displayed = target
             displayVelocity = 0
         }

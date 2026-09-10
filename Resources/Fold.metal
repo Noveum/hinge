@@ -3,6 +3,7 @@ using namespace metal;
 
 struct FoldParameters {
     float progress;
+    float opacity;
 };
 
 struct FoldVertex {
@@ -42,5 +43,5 @@ fragment float4 foldFragment(FoldVertex in [[stage_in]],
     float corners = (1.0 - smoothstep(0.0, 0.19, edge)) * upper;
     color *= 1.0 - p.progress * (0.50 * corners + 0.10 * upper);
     float feather = smoothstep(0.0, max(0.0001, p.progress * 0.012 * (1.0 - uv.y)), edge);
-    return float4(color * feather, 1.0);
+    return float4(color * feather * p.opacity, p.opacity);
 }

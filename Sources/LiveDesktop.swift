@@ -37,7 +37,6 @@ final class LiveDesktop: ObservableObject {
     private var observers = [NSObjectProtocol]()
     private var resumeAfterWake = false
     private var wakeTask: Task<Void, Never>?
-    private var frameTimeout: Task<Void, Never>?
     private var displayTask: Task<Void, Never>?
     private var capturedDisplayID: CGDirectDisplayID?
     private var includedWindowIDs = Set<CGWindowID>()
@@ -87,7 +86,8 @@ final class LiveDesktop: ObservableObject {
         }
         openAngle = angle
         error = nil
-        restOverlay()
+        metalView?.isPaused = true
+        metalView?.draw()
     }
 
     func start(calibrate: Bool = true) async {
@@ -139,6 +139,8 @@ final class LiveDesktop: ObservableObject {
             configuration.showsCursor = false
             configuration.capturesAudio = false
             configuration.colorSpaceName = CGColorSpace.sRGB
+            try await renderer.warmUp(width: configuration.width, height: configuration.height)
+            guard self.session == session else { return }
             let frames = ScreenFrames()
             frames.renderer = renderer
             frames.onFailure = { [weak self] failure in
@@ -158,8 +160,6 @@ final class LiveDesktop: ObservableObject {
                 if let failure {
                     self.stop()
                     self.error = "The desktop renderer stopped: \(failure.localizedDescription)"
-                } else if self.overlay?.isVisible == true {
-                    self.overlay?.alphaValue = 1
                 }
             }
             renderer.onRest = { [weak self] in self?.restOverlay() }
@@ -169,17 +169,20 @@ final class LiveDesktop: ObservableObject {
                 try? await stream.stopCapture()
                 return
             }
+            let deadline = CACurrentMediaTime() + 5
+            while !renderer.hasFrame {
+                guard self.session == session else { return }
+                guard CACurrentMediaTime() < deadline else {
+                    needsPermission = true
+                    throw DesktopError.message("No desktop frames arrived. Check Screen Recording permission and reopen Hinge.")
+                }
+                try await Task.sleep(for: .milliseconds(10))
+            }
+            guard self.session == session else { return }
             motion.setEnabled(true)
             isActive = true
             isStarting = false
             if motion.isClosing { beginRendering() }
-            frameTimeout = Task { [weak self] in
-                do { try await Task.sleep(for: .seconds(5)) } catch { return }
-                guard let self, self.session == session, !renderer.hasFrame else { return }
-                self.stop()
-                self.error = "No desktop frames arrived. Check Screen Recording permission and reopen Hinge."
-                self.needsPermission = true
-            }
         } catch {
             guard self.session == session else { return }
             stop()
@@ -221,44 +224,40 @@ final class LiveDesktop: ObservableObject {
         window.title = "Hinge Desktop Overlay"
         window.level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.screenSaverWindow)))
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
-        window.isOpaque = true
-        window.backgroundColor = .black
+        window.isOpaque = false
+        window.backgroundColor = .clear
         window.hasShadow = false
         window.ignoresMouseEvents = true
         window.hidesOnDeactivate = false
         window.isReleasedWhenClosed = false
         window.sharingType = .readOnly
-        window.alphaValue = 0.001
         let view = MTKView(frame: NSRect(origin: .zero, size: area.size), device: renderer.device)
         view.delegate = renderer
         view.colorPixelFormat = .bgra8Unorm
         view.colorspace = CGColorSpace(name: CGColorSpace.sRGB)
-        view.clearColor = MTLClearColorMake(0, 0, 0, 1)
+        view.clearColor = MTLClearColorMake(0, 0, 0, 0)
         view.framebufferOnly = true
         view.preferredFramesPerSecond = min(max(screen.maximumFramesPerSecond, 60), 120)
         view.isPaused = true
         view.enableSetNeedsDisplay = false
         view.autoResizeDrawable = true
+        view.layer?.isOpaque = false
         window.contentView = view
         window.setFrame(area, display: false)
         overlay = window
         metalView = view
+        window.orderFrontRegardless()
+        view.draw()
     }
 
     private func beginRendering() {
-        guard isActive, motion.isClosing, let overlay, let metalView else { return }
-        if !overlay.isVisible {
-            renderer?.preparePresentation()
-            overlay.alphaValue = 0.001
-            overlay.orderFrontRegardless()
-        }
+        guard isActive, motion.isClosing, let metalView else { return }
         metalView.isPaused = false
     }
 
     private func restOverlay() {
         guard !motion.isClosing else { return }
         metalView?.isPaused = true
-        overlay?.orderOut(nil)
     }
 
     private func refreshDisplay() {
@@ -305,8 +304,6 @@ final class LiveDesktop: ObservableObject {
         overlay?.close()
         overlay = nil
         metalView = nil
-        frameTimeout?.cancel()
-        frameTimeout = nil
         displayTask?.cancel()
         displayTask = nil
         let oldStream = stream

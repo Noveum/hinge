@@ -4,6 +4,7 @@ import CoreVideo
 
 struct FoldParameters {
     var progress: Float = 0
+    var opacity: Float = 1
 }
 
 final class DesktopRenderer: NSObject, MTKViewDelegate {
@@ -60,8 +61,53 @@ final class DesktopRenderer: NSObject, MTKViewDelegate {
         lock.unlock()
     }
 
-    func preparePresentation() {
-        wasPresented = false
+    func warmUp(width: Int, height: Int) async throws {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            do {
+                guard self.prepareBlur(width: width, height: height), let smallTexture = self.smallTexture,
+                      let command = self.queue.makeCommandBuffer() else {
+                    throw DesktopError.message("Could not prepare the desktop renderer.")
+                }
+                let descriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .bgra8Unorm, width: width, height: height, mipmapped: false)
+                descriptor.storageMode = .private
+                descriptor.usage = [.shaderRead, .renderTarget]
+                guard let source = self.device.makeTexture(descriptor: descriptor) else {
+                    throw DesktopError.message("Could not allocate the desktop texture.")
+                }
+                descriptor.width = 32
+                descriptor.height = 32
+                guard let destination = self.device.makeTexture(descriptor: descriptor) else {
+                    throw DesktopError.message("Could not allocate the renderer warmup texture.")
+                }
+                let sourcePass = MTLRenderPassDescriptor()
+                sourcePass.colorAttachments[0].texture = source
+                sourcePass.colorAttachments[0].loadAction = .clear
+                sourcePass.colorAttachments[0].storeAction = .store
+                sourcePass.colorAttachments[0].clearColor = MTLClearColorMake(0, 0, 0, 1)
+                guard let clear = command.makeRenderCommandEncoder(descriptor: sourcePass) else {
+                    throw DesktopError.message("Could not initialize the desktop texture.")
+                }
+                clear.endEncoding()
+                self.scale.encode(commandBuffer: command, sourceTexture: source, destinationTexture: smallTexture)
+                for (kernel, texture) in zip(self.blurKernels, self.blurTextures) {
+                    kernel.encode(commandBuffer: command, sourceTexture: smallTexture, destinationTexture: texture)
+                }
+                let pass = MTLRenderPassDescriptor()
+                pass.colorAttachments[0].texture = destination
+                pass.colorAttachments[0].loadAction = .clear
+                pass.colorAttachments[0].storeAction = .store
+                guard self.encodeFold(command: command, pass: pass, texture: source, progress: 0.5, opacity: 1) else {
+                    throw DesktopError.message("Could not prepare the fold pipeline.")
+                }
+                command.addCompletedHandler { command in
+                    if let error = command.error { continuation.resume(throwing: error) }
+                    else { continuation.resume() }
+                }
+                command.commit()
+            } catch {
+                continuation.resume(throwing: error)
+            }
+        }
     }
 
     private func prepareBlur(width: Int, height: Int) -> Bool {
@@ -91,8 +137,7 @@ final class DesktopRenderer: NSObject, MTKViewDelegate {
     func draw(in view: MTKView) {
         let progress = motion.sample()
         guard progress > 0 else {
-            wasPresented = false
-            onRest?()
+            clear(view)
             return
         }
         lock.lock()
@@ -117,19 +162,14 @@ final class DesktopRenderer: NSObject, MTKViewDelegate {
             }
             blurredGeneration = generation
         }
-        guard let encoder = command.makeRenderCommandEncoder(descriptor: pass) else {
+        let blend = min(progress / 0.025, 1)
+        let opacity = blend * blend * (3 - 2 * blend)
+        pass.colorAttachments[0].clearColor = MTLClearColorMake(0, 0, 0, Double(opacity))
+        guard encodeFold(command: command, pass: pass, texture: texture, progress: progress, opacity: opacity) else {
             blurredGeneration = nil
             inFlight.signal()
             return
         }
-        var parameters = FoldParameters(progress: progress)
-        encoder.setRenderPipelineState(pipeline)
-        encoder.setVertexBytes(&parameters, length: MemoryLayout<FoldParameters>.stride, index: 0)
-        encoder.setFragmentBytes(&parameters, length: MemoryLayout<FoldParameters>.stride, index: 0)
-        encoder.setFragmentTexture(texture, index: 0)
-        for (index, texture) in blurTextures.enumerated() { encoder.setFragmentTexture(texture, index: index + 1) }
-        encoder.drawPrimitives(type: .triangleStrip, vertexStart: 0, vertexCount: 4)
-        encoder.endEncoding()
         command.present(drawable)
         let inFlight = inFlight
         let notify = !wasPresented
@@ -146,6 +186,48 @@ final class DesktopRenderer: NSObject, MTKViewDelegate {
         }
         command.commit()
         renderedFrames += 1
+    }
+
+    private func encodeFold(command: MTLCommandBuffer, pass: MTLRenderPassDescriptor, texture: MTLTexture, progress: Float, opacity: Float) -> Bool {
+        guard let encoder = command.makeRenderCommandEncoder(descriptor: pass) else { return false }
+        var parameters = FoldParameters(progress: progress, opacity: opacity)
+        encoder.setRenderPipelineState(pipeline)
+        encoder.setVertexBytes(&parameters, length: MemoryLayout<FoldParameters>.stride, index: 0)
+        encoder.setFragmentBytes(&parameters, length: MemoryLayout<FoldParameters>.stride, index: 0)
+        encoder.setFragmentTexture(texture, index: 0)
+        for (index, texture) in blurTextures.enumerated() { encoder.setFragmentTexture(texture, index: index + 1) }
+        encoder.drawPrimitives(type: .triangleStrip, vertexStart: 0, vertexCount: 4)
+        encoder.endEncoding()
+        return true
+    }
+
+    private func clear(_ view: MTKView) {
+        guard inFlight.wait(timeout: .now()) == .success else { return }
+        guard let drawable = view.currentDrawable, let pass = view.currentRenderPassDescriptor,
+              let command = queue.makeCommandBuffer() else {
+            inFlight.signal()
+            return
+        }
+        pass.colorAttachments[0].clearColor = MTLClearColorMake(0, 0, 0, 0)
+        guard let encoder = command.makeRenderCommandEncoder(descriptor: pass) else {
+            inFlight.signal()
+            return
+        }
+        encoder.endEncoding()
+        command.present(drawable)
+        wasPresented = false
+        let inFlight = inFlight
+        let onRest = onRest
+        let onPresentation = onPresentation
+        command.addCompletedHandler { command in
+            inFlight.signal()
+            let error = command.error
+            DispatchQueue.main.async {
+                if let error { onPresentation?(error) }
+                else { onRest?() }
+            }
+        }
+        command.commit()
     }
 
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {}
