@@ -1,7 +1,8 @@
-const preview = document.querySelector(".preview");
-const control = document.querySelector(".motion-control");
-control?.addEventListener("click", () => {
-  const paused = preview.classList.toggle("paused");
-  control.setAttribute("aria-pressed", String(paused));
-  control.textContent = paused ? "Play preview" : "Pause preview";
+const video = document.querySelector(".demo-video");
+const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
+if (video && !motionPreference.matches) {
+  video.play().catch(() => {});
+}
+motionPreference.addEventListener("change", (event) => {
+  if (event.matches) video?.pause();
 });

@@ -1,6 +1,6 @@
 # Website
 
-A plain HTML landing page with system light and dark themes, a pausable illustrated preview, and a direct app download. Styles and scripts live in `assets/`. No framework or build step.
+A plain HTML landing page with system light and dark themes, the original 19-second demo recording, and a direct app download. Styles and scripts live in `assets/`. No framework or build step.
 
 Live at [hinge.noveum.ai](https://hinge.noveum.ai/). The download button uses [hinge.noveum.ai/download](https://hinge.noveum.ai/download).
 
@@ -18,6 +18,6 @@ python3 -m http.server 8080 --directory web
 
 Use `vercel dev` from this folder to work on the download endpoint.
 
-## Add the recording
+## Recording
 
-The current laptop animation is an illustration, labeled on the page. When the final public demo is ready, add it to `assets/` and replace the illustrated preview with a video. Keep playback controls and a static poster for visitors who prefer reduced motion.
+`assets/demo.mp4` is the original recording converted to a silent, browser-compatible H.264 MP4 with fast start and personal metadata removed. Playback controls remain available. Reduced-motion visitors see the poster until they press play.
