@@ -111,6 +111,7 @@ final class LiveDesktop: NSObject, ObservableObject {
             return
         }
         isStarting = true
+        sensor.setTracking(true)
         let session = UUID()
         self.session = session
         do {
@@ -308,6 +309,7 @@ final class LiveDesktop: NSObject, ObservableObject {
             wakeTask = nil
         }
         session = UUID()
+        sensor.setTracking(false)
         motion.setEnabled(false)
         displayLink?.invalidate()
         displayLink = nil
