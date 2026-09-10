@@ -4,8 +4,127 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light dark">
-    <title>Hinge</title>
-    <meta name="description" content="A little bend for your MacBook desktop.">
+    <meta
+      name="theme-color"
+      content="#f5f6f8"
+      media="(prefers-color-scheme: light)"
+    >
+    <meta
+      name="theme-color"
+      content="#111316"
+      media="(prefers-color-scheme: dark)"
+    >
+    <title>Hinge | A little bend for your MacBook</title>
+    <meta
+      name="description"
+      content="Your lid moves. Your desktop follows. Hinge adds a smooth, live bend to your MacBook desktop."
+    >
+    <link rel="stylesheet" href="assets/style.css">
+    <script src="assets/main.js" defer></script>
   </head>
-  <body></body>
+  <body>
+    <header class="masthead">
+      <a class="wordmark" href="/" aria-label="Hinge home"
+        ><span class="mark" aria-hidden="true"></span>hinge</a
+      >
+      <span class="platform">A small thing for your Mac.</span>
+    </header>
+    <main>
+      <section class="hero" aria-labelledby="intro">
+        <p class="eyebrow">MEET YOUR LID'S OTHER HALF</p>
+        <h1 id="intro">
+          Your lid moves.<br><span>Your desktop follows.</span>
+        </h1>
+        <p class="intro">
+          A little perspective. A softer blur. Close your MacBook<br
+            class="wide-break"
+          >
+          and watch your live desktop bend along with it.
+        </p>
+        <a class="download" href="/download"
+          ><svg
+            aria-hidden="true"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+          >
+            <path d="M12 3v12m-5-5 5 5 5-5M4 16v4h16v-4" />
+          </svg
+          >Download for Mac</a
+        >
+        <p class="requirements">Apple silicon MacBook · macOS 14+ · Free</p>
+        <figure class="preview">
+          <div
+            class="laptop"
+            role="img"
+            aria-label="Illustrated preview of a desktop gently bending and blurring as a MacBook lid closes"
+          >
+            <div class="lid">
+              <div class="ambient"></div>
+              <div class="desktop">
+                <div class="menu">
+                  <span>Hinge</span><span>File &nbsp; Edit &nbsp; View</span
+                  ><span class="clock">9:41</span>
+                </div>
+                <div class="demo-window">
+                  <div class="window-bar"><i></i><i></i><i></i></div>
+                  <div class="note">
+                    <span>A little room<br>to play.</span>
+                    <div class="note-line"></div>
+                    <div class="note-line short"></div>
+                  </div>
+                </div>
+                <div class="orb"></div>
+                <div class="dock"><i></i><i></i><i></i><i></i><i></i></div>
+              </div>
+              <span class="camera"></span>
+            </div>
+            <div class="base"><span></span></div>
+          </div>
+          <figcaption>
+            Illustrated preview <span aria-hidden="true">·</span> Recording
+            coming soon
+            <button class="motion-control" type="button" aria-pressed="false">
+              Pause preview
+            </button>
+          </figcaption>
+        </figure>
+      </section>
+      <section class="details" aria-label="Getting started and how it works">
+        <div>
+          <h2>Open. Install. Give it a tilt.</h2>
+          <p>
+            Open the download and drag Hinge into Applications. Allow Screen
+            Recording, turn Hinge on, and set your comfortable open position. It
+            remembers for next time.
+          </p>
+          <p class="small">
+            This is a development build. If macOS blocks it, approve Hinge in
+            System Settings → Privacy &amp; Security. Requires a supported lid
+            sensor.
+          </p>
+        </div>
+        <div>
+          <h2>A peek behind the bend.</h2>
+          <p>
+            Hinge reads your lid angle 120 times a second. Metal gives your live
+            desktop perspective and blur, with smoothing between readings. Tilt
+            slowly, it follows slowly. Move faster, it keeps up.
+          </p>
+          <p class="small">
+            Your screen stays on your Mac. No saved recordings. No uploads.
+          </p>
+        </div>
+      </section>
+    </main>
+    <footer>
+      <span>Made for the small moments.</span>
+      <p class="footer-note">
+        Got an idea? <a href="https://github.com/Noveum/hinge">Shoot a PR.</a>
+      </p>
+    </footer>
+  </body>
 </html>
