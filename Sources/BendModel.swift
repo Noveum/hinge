@@ -70,7 +70,7 @@ final class BendModel: ObservableObject {
             showDesktop = saved["desktop"] as? Bool ?? false
         }
         sensor.onAngle = { [weak self] value in
-            guard let self else { return }
+            guard let self, self.sensorAngle != value else { return }
             self.sensorAngle = value
             if self.followLid, !self.isPlaying, let value {
                 withAnimation(.linear(duration: 0.07)) { self.angle = value }

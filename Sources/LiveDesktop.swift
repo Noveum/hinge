@@ -71,6 +71,8 @@ final class LiveDesktop: ObservableObject {
     private var observers = [NSObjectProtocol]()
     private var resumeAfterWake = false
     private var wakeTask: Task<Void, Never>?
+    private var capturedDisplayID: CGDirectDisplayID?
+    private var includedWindowIDs = Set<CGWindowID>()
 
     init() {
         escape.onEscape = { [weak self] in self?.stop() }
@@ -90,6 +92,9 @@ final class LiveDesktop: ObservableObject {
                 guard let self, !self.resumeAfterWake else { return }
                 self.stop()
             }
+        })
+        observers.append(NotificationCenter.default.addObserver(forName: NSWindow.didBecomeKeyNotification, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor in await self?.refreshIncludedWindows() }
         })
     }
 
@@ -113,7 +118,7 @@ final class LiveDesktop: ObservableObject {
         let session = UUID()
         self.session = session
         do {
-            let renderer = try DesktopRenderer()
+            let renderer = try DesktopRenderer(resources: .main)
             let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
             guard self.session == session else { return }
             guard let display = content.displays.first(where: { CGDisplayIsBuiltin($0.displayID) != 0 }),
@@ -121,7 +126,10 @@ final class LiveDesktop: ObservableObject {
                 throw DesktopError.message("No built-in MacBook display was found.")
             }
             let ownApplications = content.applications.filter { $0.processID == ProcessInfo.processInfo.processIdentifier }
-            let filter = SCContentFilter(display: display, excludingApplications: ownApplications, exceptingWindows: [])
+            let ownWindows = includedWindows(in: content)
+            let filter = SCContentFilter(display: display, excludingApplications: ownApplications, exceptingWindows: ownWindows)
+            capturedDisplayID = display.displayID
+            includedWindowIDs = Set(ownWindows.map(\.windowID))
             let configuration = SCStreamConfiguration()
             let scale = min(screen.backingScaleFactor, 2400 / screen.frame.width)
             configuration.width = Int(screen.frame.width * scale) / 2 * 2
@@ -146,6 +154,15 @@ final class LiveDesktop: ObservableObject {
             self.renderer = renderer
             self.frames = frames
             self.stream = stream
+            renderer.onPresentation = { [weak self] failure in
+                guard let self, self.session == session else { return }
+                if let failure {
+                    self.stop()
+                    self.error = "The desktop renderer stopped: \(failure.localizedDescription)"
+                } else if self.progress > 0.0001 {
+                    self.overlay?.alphaValue = 1
+                }
+            }
             try await stream.startCapture()
             guard self.session == session else { try? await stream.stopCapture(); return }
             makeOverlay(screen: screen, renderer: renderer)
@@ -166,13 +183,38 @@ final class LiveDesktop: ObservableObject {
             }
             self.timer = timer
             RunLoop.main.add(timer, forMode: .common)
-            if demo {
-                NSApp.windows.filter { $0 !== overlay && $0.canBecomeKey }.forEach { $0.orderOut(nil) }
-            }
         } catch {
             guard self.session == session else { return }
             stop()
             self.error = error.localizedDescription
+        }
+    }
+
+    private func includedWindows(in content: SCShareableContent) -> [SCWindow] {
+        content.windows.filter {
+            $0.owningApplication?.processID == ProcessInfo.processInfo.processIdentifier &&
+            $0.windowID != CGWindowID(overlay?.windowNumber ?? 0) &&
+            $0.title != "Bendy Desktop Overlay"
+        }
+    }
+
+    private func refreshIncludedWindows() async {
+        guard isActive, let stream, let capturedDisplayID else { return }
+        let currentSession = session
+        do {
+            let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
+            guard session == currentSession,
+                  let display = content.displays.first(where: { $0.displayID == capturedDisplayID }) else { return }
+            let windows = includedWindows(in: content)
+            let windowIDs = Set(windows.map(\.windowID))
+            guard windowIDs != includedWindowIDs else { return }
+            let applications = content.applications.filter { $0.processID == ProcessInfo.processInfo.processIdentifier }
+            try await stream.updateContentFilter(SCContentFilter(display: display, excludingApplications: applications, exceptingWindows: windows))
+            if session == currentSession { includedWindowIDs = windowIDs }
+        } catch {
+            guard session == currentSession else { return }
+            stop()
+            self.error = "Could not update the captured windows: \(error.localizedDescription)"
         }
     }
 
@@ -187,9 +229,12 @@ final class LiveDesktop: ObservableObject {
         window.ignoresMouseEvents = true
         window.hidesOnDeactivate = false
         window.isReleasedWhenClosed = false
-        window.sharingType = .none
+        window.sharingType = .readOnly
+        window.alphaValue = 0.001
         let view = MTKView(frame: NSRect(origin: .zero, size: screen.frame.size), device: renderer.device)
+        view.delegate = renderer
         view.colorPixelFormat = .bgra8Unorm
+        view.colorspace = CGColorSpace(name: CGColorSpace.sRGB)
         view.clearColor = MTLClearColorMake(0, 0, 0, 1)
         view.framebufferOnly = true
         view.isPaused = true
@@ -222,15 +267,14 @@ final class LiveDesktop: ObservableObject {
             else if t < 4 { angle = 12 }
             else if t < 5.8 { angle = 12 + 123 * ease((t - 4) / 1.8) }
             else if t < 6.8 { angle = 135 }
-            else { stop(); showSettings(); return }
+            else { stop(); return }
             model.angle = angle
         } else if model.followLid {
-            guard let sensorAngle = model.sensorAngle else {
+            guard model.sensorAngle != nil else {
                 stop()
                 error = "The lid sensor stopped responding. The desktop effect has been paused."
                 return
             }
-            model.angle = sensorAngle
         }
         let delta = min(max(now - lastTime, 0.001), 0.1)
         lastTime = now
@@ -252,8 +296,11 @@ final class LiveDesktop: ObservableObject {
         renderer.parameters.blur = Float(model.blur * model.style.blurMultiplier)
         renderer.parameters.shadow = Float(model.shadow * model.style.shadowMultiplier)
         renderer.parameters.frost = model.style == .frost ? 1 : 0
-        if !overlay.isVisible { overlay.orderFrontRegardless() }
-        renderer.draw(in: metalView)
+        if !overlay.isVisible {
+            overlay.alphaValue = 0.001
+            overlay.orderFrontRegardless()
+        }
+        metalView.draw()
     }
 
     private func ease(_ value: Double) -> Double {
@@ -293,10 +340,18 @@ final class LiveDesktop: ObservableObject {
         timer = nil
         escape.unregister()
         let oldStream = stream
+        let oldFrames = frames
         stream = nil
-        if let oldStream { Task { try? await oldStream.stopCapture() } }
+        if let oldStream {
+            Task {
+                try? await oldStream.stopCapture()
+                if let oldFrames { try? oldStream.removeStreamOutput(oldFrames, type: .screen) }
+            }
+        }
         frames = nil
         renderer = nil
+        capturedDisplayID = nil
+        includedWindowIDs = []
         progress = 0
         wasFolded = false
         demoStart = nil
