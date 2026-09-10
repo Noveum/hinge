@@ -43,23 +43,32 @@ enum BendMath {
 @MainActor
 final class BendModel: ObservableObject {
     @Published var angle = 135.0
-    @Published var clearAngle = 110.0
-    @Published var perspective = 1.0
-    @Published var blur = 0.65
-    @Published var shadow = 0.55
-    @Published var style = BendStyle.silk
+    @Published var clearAngle = 110.0 { didSet { saveAppearance() } }
+    @Published var perspective = 1.0 { didSet { saveAppearance() } }
+    @Published var blur = 0.65 { didSet { saveAppearance() } }
+    @Published var shadow = 0.55 { didSet { saveAppearance() } }
+    @Published var style = BendStyle.silk { didSet { saveAppearance() } }
     @Published var isPlaying = false
     @Published var isEnabled = true
-    @Published var soundEnabled = true
+    @Published var soundEnabled = true { didSet { saveAppearance() } }
     @Published var followLid = false
     @Published var sensorAngle: Double?
-    @Published var showDesktop = false
+    @Published var showDesktop = false { didSet { saveAppearance() } }
     @Published var completedBends = 0
     var playback: Task<Void, Never>?
     var sound: NSSound?
     private let sensor = LidSensor()
 
     init() {
+        if let saved = UserDefaults.standard.dictionary(forKey: "appearance") {
+            clearAngle = min(max(saved["clearAngle"] as? Double ?? 110, 70), 135)
+            perspective = min(max(saved["perspective"] as? Double ?? 1, 0), 1)
+            blur = min(max(saved["blur"] as? Double ?? 0.65, 0), 1)
+            shadow = min(max(saved["shadow"] as? Double ?? 0.55, 0), 1)
+            style = BendStyle(rawValue: saved["style"] as? String ?? "Silk") ?? .silk
+            soundEnabled = saved["sound"] as? Bool ?? true
+            showDesktop = saved["desktop"] as? Bool ?? false
+        }
         sensor.onAngle = { [weak self] value in
             guard let self else { return }
             self.sensorAngle = value
@@ -68,6 +77,14 @@ final class BendModel: ObservableObject {
             }
         }
         DispatchQueue.main.async { [weak self] in self?.sensor.start() }
+    }
+
+    private func saveAppearance() {
+        UserDefaults.standard.set([
+            "clearAngle": clearAngle, "perspective": perspective,
+            "blur": blur, "shadow": shadow, "style": style.rawValue,
+            "sound": soundEnabled, "desktop": showDesktop
+        ], forKey: "appearance")
     }
 
     func reconnectSensor() {
@@ -98,15 +115,26 @@ final class BendModel: ObservableObject {
             guard let self else { return }
             withAnimation(.easeInOut(duration: 0.45)) { self.angle = 135 }
             guard await self.pause(0.65) else { return }
-            withAnimation(.timingCurve(0.42, 0, 0.25, 1, duration: 2.4)) { self.angle = 12 }
-            guard await self.pause(2.95) else { return }
-            withAnimation(.timingCurve(0.22, 1, 0.36, 1, duration: 1.65)) { self.angle = 135 }
-            guard await self.pause(1.5) else { return }
+            guard await self.animateAngle(to: 12, duration: 2.4) else { return }
+            guard await self.pause(0.55) else { return }
+            guard await self.animateAngle(to: 135, duration: 1.8) else { return }
             self.playClick()
             self.completedBends += 1
             guard await self.pause(0.65) else { return }
             self.isPlaying = false
         }
+    }
+
+    private func animateAngle(to destination: Double, duration: Double) async -> Bool {
+        let start = CACurrentMediaTime()
+        let origin = angle
+        while !Task.isCancelled {
+            let t = min((CACurrentMediaTime() - start) / duration, 1)
+            angle = origin + (destination - origin) * t * t * (3 - 2 * t)
+            if t >= 1 { return true }
+            guard await pause(1 / 60) else { return false }
+        }
+        return false
     }
 
     func pause(_ seconds: Double) async -> Bool {

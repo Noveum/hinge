@@ -34,9 +34,15 @@ struct SettingsView: View {
                     }
                 }
                 .padding(.bottom, 22)
-                if page == .appearance { appearance }
-                else if page == .general { general }
-                else { about }
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        if page == .appearance { appearance }
+                        else if page == .general { general }
+                        else { about }
+                    }
+                    .padding(.bottom, 4)
+                }
+                .scrollIndicators(.hidden)
                 Spacer(minLength: 12)
                 if let error = desktop.error {
                     VStack(alignment: .leading, spacing: 8) {
@@ -57,7 +63,7 @@ struct SettingsView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             .background(LinearGradient(colors: [Color(hex: 0x5d5e61), Color(hex: 0x515358), Color(hex: 0x414851)], startPoint: .topLeading, endPoint: .bottomTrailing))
         }
-        .frame(width: 870, height: desktop.error == nil ? 810 : 888)
+        .frame(width: 870, height: min(900, (NSScreen.main?.visibleFrame.height ?? 1000) - 40))
         .foregroundStyle(Color(hex: 0xededee))
         .tint(Color(hex: 0x0a94ff))
         .background(Color(hex: 0x626364))

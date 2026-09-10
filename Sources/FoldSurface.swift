@@ -68,7 +68,7 @@ struct MacBookPreview: View {
     @ObservedObject var model: BendModel
     var interactive = true
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var dragStart = 135.0
+    @State private var dragStart: Double?
 
     var body: some View {
         GeometryReader { geometry in
@@ -124,10 +124,10 @@ struct MacBookPreview: View {
             .contentShape(Rectangle())
             .gesture(DragGesture(minimumDistance: 5)
                 .onChanged { value in
-                    if value.translation == .zero { dragStart = model.angle }
-                    model.setAngle(dragStart - value.translation.height / displayHeight * 135)
+                    if dragStart == nil { dragStart = model.angle }
+                    model.setAngle((dragStart ?? model.angle) - value.translation.height / displayHeight * 135)
                 }
-                .onEnded { _ in dragStart = model.angle })
+                .onEnded { _ in dragStart = nil })
         }
         .aspectRatio(1 / (0.89 / 1.55 + 0.048), contentMode: .fit)
     }

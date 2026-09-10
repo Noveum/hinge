@@ -69,17 +69,27 @@ final class LiveDesktop: ObservableObject {
     private weak var model: BendModel?
     private var session = UUID()
     private var observers = [NSObjectProtocol]()
+    private var resumeAfterWake = false
+    private var wakeTask: Task<Void, Never>?
 
     init() {
         escape.onEscape = { [weak self] in self?.stop() }
         let center = NSWorkspace.shared.notificationCenter
         for name in [NSWorkspace.willSleepNotification, NSWorkspace.screensDidSleepNotification] {
             observers.append(center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
-                Task { @MainActor in self?.stop() }
+                Task { @MainActor in self?.suspendForSleep() }
+            })
+        }
+        for name in [NSWorkspace.didWakeNotification, NSWorkspace.screensDidWakeNotification] {
+            observers.append(center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                Task { @MainActor in self?.resumeFromSleep() }
             })
         }
         observers.append(NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
-            Task { @MainActor in self?.stop() }
+            Task { @MainActor in
+                guard let self, !self.resumeAfterWake else { return }
+                self.stop()
+            }
         })
     }
 
@@ -251,7 +261,29 @@ final class LiveDesktop: ObservableObject {
         return t * t * (3 - 2 * t)
     }
 
-    func stop() {
+    private func suspendForSleep() {
+        resumeAfterWake = resumeAfterWake || (isActive && !isDemo)
+        stop(preserveResume: true)
+    }
+
+    private func resumeFromSleep() {
+        guard resumeAfterWake, let model, wakeTask == nil else { return }
+        wakeTask = Task { [weak self] in
+            do { try await Task.sleep(for: .seconds(1)) } catch { return }
+            guard let self, self.resumeAfterWake, !Task.isCancelled else { return }
+            self.wakeTask = nil
+            self.resumeAfterWake = false
+            model.reconnectSensor()
+            await self.start(model: model)
+        }
+    }
+
+    func stop(preserveResume: Bool = false) {
+        if !preserveResume {
+            resumeAfterWake = false
+            wakeTask?.cancel()
+            wakeTask = nil
+        }
         session = UUID()
         overlay?.orderOut(nil)
         overlay?.close()

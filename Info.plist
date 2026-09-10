@@ -11,4 +11,6 @@
 <key>LSMinimumSystemVersion</key><string>14.0</string>
 <key>NSHighResolutionCapable</key><true/>
 <key>NSPrincipalClass</key><string>NSApplication</string>
+<key>CFBundleIconFile</key><string>AppIcon</string>
+<key>NSScreenCaptureUsageDescription</key><string>Bendy reads your display to animate your desktop as the lid closes. Frames stay in memory on your Mac.</string>
 </dict></plist>
