@@ -48,6 +48,7 @@ final class LiveDesktop: NSObject, ObservableObject {
   private var session = UUID()
   private var observers = [NSObjectProtocol]()
   private var resumeAfterWake = false
+  private var startWhenSensorIsReady = UserDefaults.standard.bool(forKey: "enabled")
   private var wakeTask: Task<Void, Never>?
   private var displayTask: Task<Void, Never>?
   private var capturedDisplayID: CGDirectDisplayID?
@@ -77,6 +78,10 @@ final class LiveDesktop: NSObject, ObservableObject {
           }
         }
         if update.beganClosing { self.beginRendering() }
+        if update.available, self.startWhenSensorIsReady {
+          self.startWhenSensorIsReady = false
+          await self.start()
+        }
       }
     }
     sensor.start()
@@ -111,6 +116,12 @@ final class LiveDesktop: NSObject, ObservableObject {
       ) { [weak self] _ in
         Task { @MainActor in await self?.refreshIncludedWindows() }
       })
+  }
+
+  func setEnabled(_ enabled: Bool) {
+    UserDefaults.standard.set(enabled, forKey: "enabled")
+    startWhenSensorIsReady = false
+    if enabled { Task { await start() } } else { stop() }
   }
 
   func setOpenPosition() {

@@ -14,9 +14,9 @@ struct HingeApp: App {
           delegate.onTerminate = { desktop.shutDown() }
           delegate.installToggleHotKey {
             if desktop.isActive {
-              desktop.stop()
+              desktop.setEnabled(false)
             } else if !desktop.isStarting {
-              Task { await desktop.start() }
+              desktop.setEnabled(true)
             }
           }
         }
@@ -103,7 +103,7 @@ struct HingeMenu: View {
 
   var body: some View {
     Button {
-      if desktop.isActive { desktop.stop() } else { Task { await desktop.start() } }
+      desktop.setEnabled(!desktop.isActive)
     } label: {
       HStack {
         Text(desktop.isActive ? "Turn off" : "Turn on")

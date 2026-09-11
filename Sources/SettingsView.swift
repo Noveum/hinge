@@ -25,9 +25,7 @@ struct SettingsView: View {
         Toggle(
           isOn: Binding(
             get: { desktop.isActive || desktop.isStarting },
-            set: { enabled in
-              if enabled { Task { await desktop.start() } } else { desktop.stop() }
-            })
+            set: { desktop.setEnabled($0) })
         ) {
           HStack(spacing: 7) {
             Circle().fill(desktop.isActive ? Color.green : Color.secondary.opacity(0.45))

@@ -23,7 +23,7 @@ make build
 open build/Hinge.app
 ```
 
-Allow Screen Recording, reopen Hinge if prompted, and turn it on. The starting angle is 100°. Prefer something else? Get comfy and click **Set open position**. Hinge remembers.
+Allow Screen Recording, reopen Hinge if prompted, and turn it on. It turns itself back on the next time you open it. The starting angle is 100°. Prefer something else? Get comfy and click **Set open position**. Hinge remembers.
 
 ## Got an idea?
 
