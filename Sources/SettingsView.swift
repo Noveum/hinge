@@ -74,6 +74,25 @@ struct SettingsView: View {
             .disabled(!desktop.sensorAvailable || desktop.isStarting)
         }
         Divider()
+        HStack {
+          VStack(alignment: .leading, spacing: 4) {
+            Text("Sides").fontWeight(.medium)
+            Text("Beside the folded desktop")
+              .foregroundStyle(.secondary)
+          }
+          Spacer()
+          Picker(
+            "Sides",
+            selection: Binding(get: { desktop.sideFill }, set: { desktop.setSideFill($0) })
+          ) {
+            Text("Blur").tag(SideFill.blur)
+            Text("Black").tag(SideFill.black)
+          }
+          .pickerStyle(.segmented)
+          .labelsHidden()
+          .fixedSize()
+        }
+        Divider()
         Toggle("Launch at login", isOn: launchAtLogin)
           .toggleStyle(.switch)
         if loginItemStatus == .requiresApproval {
