@@ -3,7 +3,6 @@ import re
 import shutil
 import subprocess
 import sys
-import tomllib
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -12,6 +11,11 @@ from pygments import lex
 from pygments.lexers import get_lexer_by_name, get_lexer_for_filename
 from pygments.token import Comment, String
 from pygments.util import ClassNotFound
+
+try:
+    import tomllib
+except ModuleNotFoundError:
+    import tomli as tomllib
 
 ROOT = Path(__file__).resolve().parent.parent
 BIOME = {".js", ".jsx", ".ts", ".tsx", ".json", ".jsonc", ".css", ".html"}
