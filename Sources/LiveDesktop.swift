@@ -35,6 +35,7 @@ final class LiveDesktop: NSObject, ObservableObject {
   @Published private(set) var sensorAvailable = false
   @Published private(set) var openAngle: Double
   @Published private(set) var effectStrength: Double
+  @Published private(set) var followOpenAngle: Bool
   @Published private(set) var sideFill: SideFill
   @Published private(set) var error: String?
   @Published private(set) var needsPermission = false
@@ -67,15 +68,18 @@ final class LiveDesktop: NSObject, ObservableObject {
     let savedStrength = UserDefaults.standard.object(forKey: "effectStrength") as? Double ?? 1
     let effectStrength =
       savedStrength.isFinite && (0.25...1).contains(savedStrength) ? savedStrength : 1
+    let followOpenAngle = UserDefaults.standard.object(forKey: "followOpenAngle") as? Bool ?? true
     self.openAngle = openAngle
     self.effectStrength = effectStrength
+    self.followOpenAngle = followOpenAngle
     sideFill = UserDefaults.standard.string(forKey: "sideFill").flatMap(SideFill.init) ?? .blur
-    motion = LidMotion(openAngle: openAngle)
+    motion = LidMotion(openAngle: openAngle, followOpenAngle: followOpenAngle)
     super.init()
     let motion = motion
     sensor.onAngle = { [weak self] angle in
       let update = motion.receive(angle)
-      guard update.availabilityChanged || update.beganClosing else { return }
+      guard update.availabilityChanged || update.beganClosing || update.adoptedAngle != nil
+      else { return }
       Task { @MainActor [weak self] in
         guard let self else { return }
         if update.availabilityChanged {
@@ -89,6 +93,7 @@ final class LiveDesktop: NSObject, ObservableObject {
             self.error = Self.sensorDroppedMessage
           }
         }
+        if let adopted = update.adoptedAngle { self.storeOpenAngle(adopted) }
         if update.beganClosing { self.beginRendering() }
         if update.available, self.isEnabled, !self.isActive, !self.isStarting,
           !self.resumeAfterWake
@@ -152,11 +157,22 @@ final class LiveDesktop: NSObject, ObservableObject {
       error = "Open the lid to your comfortable viewing position first."
       return
     }
-    openAngle = angle
-    UserDefaults.standard.set(angle, forKey: "openAngle")
+    storeOpenAngle(angle)
     error = nil
     displayLink?.isPaused = true
     metalView?.draw()
+  }
+
+  private func storeOpenAngle(_ angle: Double) {
+    openAngle = angle
+    UserDefaults.standard.set(angle, forKey: "openAngle")
+  }
+
+  func setFollowOpenAngle(_ value: Bool) {
+    guard value != followOpenAngle else { return }
+    followOpenAngle = value
+    UserDefaults.standard.set(value, forKey: "followOpenAngle")
+    motion.setFollowOpenAngle(value)
   }
 
   func setEffectStrength(_ value: Double) {

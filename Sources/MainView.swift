@@ -120,8 +120,23 @@ struct MainView: View {
       ) {
         Button("Set") { desktop.setOpenPosition() }
           .controlSize(.small)
-          .disabled(!desktop.sensorAvailable || desktop.isStarting)
+          .disabled(!desktop.sensorAvailable || desktop.isStarting || desktop.followOpenAngle)
           .help("Save the lid angle you are viewing at right now")
+      }
+      SettingsDivider()
+      SettingsRow(
+        "arrow.triangle.2.circlepath", tint: .teal, title: "Follow my open angle",
+        subtitle: "Take whatever angle you settle at"
+      ) {
+        Toggle(
+          "Follow my open angle",
+          isOn: Binding(
+            get: { desktop.followOpenAngle }, set: { desktop.setFollowOpenAngle($0) })
+        )
+        .toggleStyle(.switch)
+        .controlSize(.small)
+        .labelsHidden()
+        .help("Take whatever angle you settle at as the new open position.")
       }
     }
   }

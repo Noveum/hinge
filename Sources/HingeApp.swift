@@ -111,7 +111,7 @@ struct HingeMenu: View {
     }
     .disabled(desktop.isStarting)
     Button("Set open position") { desktop.setOpenPosition() }
-      .disabled(!desktop.sensorAvailable || desktop.isStarting)
+      .disabled(!desktop.sensorAvailable || desktop.isStarting || desktop.followOpenAngle)
     Divider()
     Button("Open Hinge") {
       navigator.screen = .main
