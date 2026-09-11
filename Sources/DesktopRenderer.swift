@@ -8,6 +8,8 @@ struct FoldParameters {
   var blurInset: Float = 0
   var blurSpan: Float = 1
   var taper = DesktopRenderer.taper
+  var crop: Float = 0
+  var depth: Float = 0
 }
 
 enum SideFill: String {
@@ -39,6 +41,8 @@ final class DesktopRenderer: NSObject, MTKViewDelegate {
   private let motion: LidMotion
   private var wasPresented = false
   var effectStrength: Float = 1
+  var cropsTop = true
+  var blursByDistance = true
   var sideFill = SideFill.blur {
     didSet { if sideFill != oldValue { blurredGeneration = nil } }
   }
@@ -292,7 +296,8 @@ final class DesktopRenderer: NSObject, MTKViewDelegate {
     let paddedWidth = Float(sideTexture?.width ?? 1)
     var parameters = FoldParameters(
       progress: progress, opacity: opacity, blurInset: Float(blurPadding) / paddedWidth,
-      blurSpan: (paddedWidth - Float(2 * blurPadding)) / paddedWidth)
+      blurSpan: (paddedWidth - Float(2 * blurPadding)) / paddedWidth, crop: cropsTop ? 1 : 0,
+      depth: blursByDistance ? 1 : 0)
     encoder.setRenderPipelineState(pipeline)
     encoder.setVertexBytes(&parameters, length: MemoryLayout<FoldParameters>.stride, index: 0)
     encoder.setFragmentBytes(&parameters, length: MemoryLayout<FoldParameters>.stride, index: 0)

@@ -60,6 +60,34 @@ struct SettingsView: View {
         .fixedSize()
         .controlSize(.small)
       }
+      SettingsDivider()
+      SettingsRow(
+        "crop", tint: .teal, title: "Crop from the top",
+        subtitle: "The top of the desktop slides out of view as the lid closes."
+      ) {
+        Toggle(
+          "Crop from the top",
+          isOn: Binding(get: { desktop.cropsTop }, set: { desktop.setCropsTop($0) })
+        )
+        .toggleStyle(.switch)
+        .controlSize(.small)
+        .labelsHidden()
+      }
+      SettingsDivider()
+      SettingsRow(
+        "camera.aperture", tint: .purple, title: "Blur by distance",
+        subtitle: desktop.blursByDistance
+          ? "Blur grows with distance from the open screen, so the hinge edge stays sharp."
+          : "Blur builds toward the top and fades out near the hinge."
+      ) {
+        Toggle(
+          "Blur by distance",
+          isOn: Binding(get: { desktop.blursByDistance }, set: { desktop.setBlursByDistance($0) })
+        )
+        .toggleStyle(.switch)
+        .controlSize(.small)
+        .labelsHidden()
+      }
     }
   }
 
