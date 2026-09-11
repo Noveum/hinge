@@ -8,8 +8,8 @@ struct HingeApp: App {
   @StateObject private var desktop = LiveDesktop()
 
   var body: some Scene {
-    Window("Hinge", id: "settings") {
-      SettingsView(desktop: desktop)
+    Window("Hinge", id: "main") {
+      MainView(desktop: desktop)
         .onAppear {
           delegate.onTerminate = { desktop.shutDown() }
           delegate.installToggleHotKey {
@@ -31,6 +31,12 @@ struct HingeApp: App {
         )
       }
     }
+    Window("Settings", id: "settings") {
+      SettingsView(desktop: desktop)
+    }
+    .windowStyle(.hiddenTitleBar)
+    .windowResizability(.contentSize)
+    .defaultPosition(.center)
     MenuBarExtra(
       "Hinge", systemImage: desktop.isActive ? "laptopcomputer.and.arrow.down" : "laptopcomputer"
     ) {
@@ -115,6 +121,10 @@ struct HingeMenu: View {
     Button("Set open position") { desktop.setOpenPosition() }
       .disabled(!desktop.sensorAvailable || desktop.isStarting)
     Divider()
+    Button("Open Hinge") {
+      openWindow(id: "main")
+      NSApp.activate(ignoringOtherApps: true)
+    }
     Button("Settings…") {
       openWindow(id: "settings")
       NSApp.activate(ignoringOtherApps: true)

@@ -134,3 +134,11 @@ struct SidebarMaterial: NSViewRepresentable {
 
   func updateNSView(_ view: NSVisualEffectView, context: Context) {}
 }
+
+func openScreenRecordingSettings() {
+  guard
+    let url = URL(
+      string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")
+  else { return }
+  NSWorkspace.shared.open(url)
+}
