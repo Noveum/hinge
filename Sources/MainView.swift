@@ -1,43 +1,76 @@
 import AppKit
 import SwiftUI
 
+@MainActor
+final class Navigator: ObservableObject {
+  enum Screen {
+    case main
+    case settings
+  }
+
+  @Published var screen = Screen.main
+}
+
 struct MainView: View {
   @ObservedObject var desktop: LiveDesktop
-  @Environment(\.openWindow) private var openWindow
+  @ObservedObject var navigator: Navigator
 
   var body: some View {
     VStack(spacing: 0) {
       header
       Divider().opacity(0.6)
-      ScrollView {
-        VStack(spacing: 20) {
-          hero
-          if let error = desktop.error { errorCard(error) }
-          positionCard
-        }
-        .padding(EdgeInsets(top: 22, leading: 20, bottom: 22, trailing: 20))
-      }
-      .background(Color(nsColor: .windowBackgroundColor).ignoresSafeArea())
+      content
     }
-    .frame(width: 420, height: 470)
+    .frame(width: 460, height: 580)
   }
 
   private var header: some View {
     ZStack {
-      Text("Hinge")
+      Text(navigator.screen == .main ? "Hinge" : "Settings")
         .font(.system(size: 13, weight: .semibold))
       HStack(spacing: 0) {
-        Spacer(minLength: 0)
-        HeaderButton(symbol: "gearshape.fill", help: "Settings") {
-          openWindow(id: "settings")
-          NSApp.activate(ignoringOtherApps: true)
+        if navigator.screen == .settings {
+          HeaderButton(symbol: "chevron.left", help: "Back") { navigator.screen = .main }
+            .keyboardShortcut(.escape, modifiers: [])
         }
-        .keyboardShortcut(",", modifiers: .command)
+        Spacer(minLength: 0)
+        if navigator.screen == .main {
+          HeaderButton(symbol: "gearshape.fill", help: "Settings") {
+            navigator.screen = .settings
+          }
+          .keyboardShortcut(",", modifiers: .command)
+        }
       }
+      .padding(.leading, 76)
       .padding(.trailing, 12)
     }
     .frame(height: 40)
     .background(HeaderMaterial().ignoresSafeArea())
+  }
+
+  private var content: some View {
+    ZStack {
+      switch navigator.screen {
+      case .main:
+        home
+          .transition(.move(edge: .leading).combined(with: .opacity))
+      case .settings:
+        SettingsView(desktop: desktop)
+          .transition(.move(edge: .trailing).combined(with: .opacity))
+      }
+    }
+    .animation(.easeInOut(duration: 0.22), value: navigator.screen)
+    .background(Color(nsColor: .windowBackgroundColor).ignoresSafeArea())
+  }
+
+  private var home: some View {
+    VStack(spacing: 20) {
+      hero
+      if let error = desktop.error { errorCard(error) }
+      Spacer(minLength: 12)
+      positionCard
+    }
+    .padding(EdgeInsets(top: 26, leading: 20, bottom: 22, trailing: 20))
   }
 
   private var hero: some View {
