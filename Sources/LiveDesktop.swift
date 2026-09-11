@@ -159,7 +159,7 @@ final class LiveDesktop: NSObject, ObservableObject {
         display: display, excludingApplications: ownApplications, exceptingWindows: ownWindows)
       capturedDisplayID = display.displayID
       includedWindowIDs = Set(ownWindows.map(\.windowID))
-      let area = captureArea(screen: screen, displayID: display.displayID, windows: content.windows)
+      let area = screen.frame
       let configuration = SCStreamConfiguration()
       configuration.sourceRect = CGRect(
         x: area.minX - screen.frame.minX, y: screen.frame.maxY - area.maxY, width: area.width,
@@ -265,58 +265,27 @@ final class LiveDesktop: NSObject, ObservableObject {
     }
   }
 
-  private func captureArea(screen: NSScreen, displayID: CGDirectDisplayID, windows: [SCWindow])
-    -> CGRect
-  {
-    let bounds = CGDisplayBounds(displayID)
-    let minimumHeight = bounds.height - screen.safeAreaInsets.top - 2
-    let fullscreen = windows.contains {
-      $0.isOnScreen && $0.windowLayer == 0
-        && $0.owningApplication?.processID != ProcessInfo.processInfo.processIdentifier
-        && $0.frame.height >= minimumHeight
-        && $0.frame.intersection(bounds).width > bounds.width * 0.2
-        && abs($0.frame.maxY - bounds.maxY) <= 2
-    }
-    return fullscreen ? screen.frame : screen.visibleFrame
-  }
-
-  private func refreshSpace(attempt: Int = 0) {
+  private func refreshSpace() {
     guard isActive, !resumeAfterWake else { return }
     displayTask?.cancel()
     let refreshSession = session
     displayTask = Task { [weak self] in
-      do {
-        try await Task.sleep(for: .milliseconds(400))
-        guard let self, self.isActive, let displayID = self.capturedDisplayID,
-          let screen = NSScreen.screens.first(where: {
-            ($0.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?
-              .uint32Value == displayID
-          })
-        else { return }
-        let currentSession = self.session
-        let content = try await SCShareableContent.excludingDesktopWindows(
-          false, onScreenWindowsOnly: true)
-        guard !Task.isCancelled, self.session == currentSession else { return }
-        self.displayTask = nil
-        let area = self.captureArea(screen: screen, displayID: displayID, windows: content.windows)
-        if self.overlay?.frame != area {
-          self.stop()
-          await self.start()
-        } else {
-          self.overlay?.orderFrontRegardless()
-        }
-      } catch {
-        guard let self, !Task.isCancelled, self.session == refreshSession, self.isActive else {
-          return
-        }
-        self.displayTask = nil
-        if attempt < 2 {
-          self.refreshSpace(attempt: attempt + 1)
-        } else {
-          self.stop()
-          self.error =
-            "Could not update the desktop after switching Spaces. Turn Hinge on to retry."
-        }
+      do { try await Task.sleep(for: .milliseconds(400)) } catch { return }
+      guard let self, !Task.isCancelled, self.session == refreshSession,
+        self.isActive, !self.resumeAfterWake
+      else { return }
+      self.displayTask = nil
+      guard let displayID = self.capturedDisplayID,
+        let screen = NSScreen.screens.first(where: {
+          ($0.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?
+            .uint32Value == displayID
+        })
+      else { return }
+      if self.overlay?.frame != screen.frame {
+        self.stop()
+        await self.start()
+      } else {
+        self.overlay?.orderFrontRegardless()
       }
     }
   }

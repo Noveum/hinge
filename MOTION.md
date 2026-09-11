@@ -53,4 +53,4 @@ These checks do not measure physical end-to-end latency, which also depends on t
 
 ## Recovery
 
-Sensor loss cancels both startup and active capture. Switching Spaces retries a failed capture lookup twice before showing a recoverable error. Wake recovery waits up to five seconds for the sensor, and duplicate wake notifications do not interrupt an active session. Turning Hinge off cancels pending recovery.
+Sensor loss cancels both startup and active capture. Switching Spaces uses the full display frame directly, without enumerating shareable content. Capture restarts only when the display area changes. Wake recovery waits up to five seconds for the sensor, and duplicate wake notifications do not interrupt an active session. Turning Hinge off cancels pending recovery.
