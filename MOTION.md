@@ -27,7 +27,7 @@ The new projection keeps the top and bottom edges at their original height. Its 
 
 Three cached Gaussian blur levels at nominal widths of 6, 16, and 36 pixels per 786-pixel reference width provide continuous progressive blur. Blur strength varies with closure and fades toward the lower tenth of the desktop. Subtle top-corner shading and side feathering complete the single effect. The side gaps extend the nearest desktop edge using the cached broad blur texture, with a soft blend into the folded image. An inverse projection in the fragment shader preserves the fold geometry while covering the full overlay. This adds no capture, blur pass, or intermediate texture.
 
-The effect covers the built-in screen's usable desktop area, excluding the normal menu bar and Dock. A non-activating panel joins fullscreen Spaces without taking keyboard focus. Space changes refresh the capture area: fullscreen content uses the whole display, while the regular desktop keeps the menu bar and Dock stationary.
+The effect covers the built-in screen's full display frame, including the menu bar and Dock. A non-activating panel joins fullscreen Spaces without taking keyboard focus. Space changes keep the same capture area and bring the panel back to the front.
 
 ## Motion timing
 
