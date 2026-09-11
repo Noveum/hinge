@@ -38,6 +38,25 @@ struct SettingsView: View {
         Divider()
         HStack {
           VStack(alignment: .leading, spacing: 4) {
+            Text("Effect strength").fontWeight(.medium)
+            Text("\(Int(desktop.effectStrength * 100))%")
+              .foregroundStyle(.secondary)
+              .monospacedDigit()
+          }
+          Spacer()
+          Slider(
+            value: Binding(
+              get: { desktop.effectStrength },
+              set: { desktop.setEffectStrength($0) }),
+            in: 0.25...1, step: 0.05
+          )
+          .frame(width: 140)
+          .accessibilityLabel("Effect strength")
+          .accessibilityValue("\(Int(desktop.effectStrength * 100)) percent")
+        }
+        Divider()
+        HStack {
+          VStack(alignment: .leading, spacing: 4) {
             Text("Open position").fontWeight(.medium)
             Text("\(Int(desktop.openAngle))°")
               .foregroundStyle(.secondary)
