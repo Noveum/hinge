@@ -8,7 +8,7 @@ Live at [hinge.noveum.ai](https://hinge.noveum.ai/). The download button uses [h
 
 Vercel uses `web` as the root directory and `main` as the production branch. Push to `main` to deploy. Branches get preview deployments.
 
-Downloads from the private repository need a server-only `GITHUB_TOKEN` environment variable in Vercel with read-only Contents access to `Noveum/hinge`. The endpoint redirects to the latest release's `Hinge.dmg` without exposing the token.
+The repository is public, so downloads work without credentials. An optional server-only `GITHUB_TOKEN` environment variable in Vercel, with read-only Contents access to `Noveum/hinge`, raises the GitHub API limit from 60 to 5,000 requests per hour. The endpoint redirects to the latest release's `Hinge.dmg` without exposing the token.
 
 ## Preview
 
