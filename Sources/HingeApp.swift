@@ -31,17 +31,21 @@ struct HingeApp: App {
         )
       }
     }
+    settingsWindow
+    MenuBarExtra(
+      "Hinge", systemImage: desktop.isActive ? "laptopcomputer.and.arrow.down" : "laptopcomputer"
+    ) {
+      HingeMenu(desktop: desktop)
+    }
+  }
+
+  private var settingsWindow: some Scene {
     Window("Settings", id: "settings") {
       SettingsView(desktop: desktop)
     }
     .windowStyle(.hiddenTitleBar)
     .windowResizability(.contentSize)
     .defaultPosition(.center)
-    MenuBarExtra(
-      "Hinge", systemImage: desktop.isActive ? "laptopcomputer.and.arrow.down" : "laptopcomputer"
-    ) {
-      HingeMenu(desktop: desktop)
-    }
   }
 }
 
