@@ -71,8 +71,16 @@ struct SettingsView: View {
           }
           Spacer()
           Button("Set open position") { desktop.setOpenPosition() }
-            .disabled(!desktop.sensorAvailable || desktop.isStarting)
+            .disabled(
+              !desktop.sensorAvailable || desktop.isStarting || desktop.followOpenAngle)
         }
+        Toggle(
+          "Follow my open angle",
+          isOn: Binding(
+            get: { desktop.followOpenAngle }, set: { desktop.setFollowOpenAngle($0) })
+        )
+        .toggleStyle(.switch)
+        .help("Take whatever angle you settle at as the new open position.")
         Divider()
         Toggle("Launch at login", isOn: launchAtLogin)
           .toggleStyle(.switch)
@@ -107,10 +115,14 @@ struct SettingsView: View {
         .font(.system(size: 12))
         .fixedSize(horizontal: false, vertical: true)
       } else {
-        Text("Starts at 100°. Set your comfortable open position once, and Hinge remembers it.")
-          .font(.system(size: 12))
-          .foregroundStyle(.secondary)
-          .fixedSize(horizontal: false, vertical: true)
+        Text(
+          desktop.followOpenAngle
+            ? "Hinge takes the angle you settle at as your open position."
+            : "Starts at 100°. Set your comfortable open position once, and Hinge remembers it."
+        )
+        .font(.system(size: 12))
+        .foregroundStyle(.secondary)
+        .fixedSize(horizontal: false, vertical: true)
       }
     }
     .padding(28)

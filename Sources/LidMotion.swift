@@ -14,15 +14,21 @@ final class LidMotion {
   private var displayVelocity = 0.0
   private var lastFrame = 0.0
   private var lastSample = 0.0
+  private var following = false
+  private var lowestAngle: Double?
+  private var settleAngle: Double?
+  private var settleStart = 0.0
 
-  init(openAngle: Double = 100) {
+  init(openAngle: Double = 100, followOpenAngle: Bool = false) {
     baseline = openAngle
+    following = followOpenAngle
   }
 
   struct Update {
     let availabilityChanged: Bool
     let available: Bool
     let beganClosing: Bool
+    let adoptedAngle: Double?
   }
 
   func receive(_ value: Double?, at time: Double = CACurrentMediaTime()) -> Update {
@@ -31,6 +37,11 @@ final class LidMotion {
     let changed = (angle == nil) != (value == nil)
     let previous = target
     angle = value
+    if let value {
+      lowestAngle = min(lowestAngle ?? value, value)
+    } else {
+      lowestAngle = nil
+    }
     if let value, let trackedAngle, lastSample > 0, time >= lastSample {
       let delta = max(time - lastSample, 0.001)
       let nextAngle = min(max(trackedAngle, value - 0.6), value + 0.6)
@@ -48,10 +59,39 @@ final class LidMotion {
       direction = 0
     }
     lastSample = time
+    let adopted = adoptOpenAngle(value, at: time)
     updateTarget(at: time)
     return Update(
       availabilityChanged: changed, available: value != nil,
-      beganClosing: previous == 0 && target > 0)
+      beganClosing: previous == 0 && target > 0, adoptedAngle: adopted)
+  }
+
+  private func adoptOpenAngle(_ value: Double?, at time: Double) -> Double? {
+    guard following, let value, let lowest = lowestAngle else {
+      settleAngle = nil
+      return nil
+    }
+    guard let candidate = settleAngle, abs(value - candidate) <= 1.5 else {
+      settleAngle = value
+      settleStart = time
+      return nil
+    }
+    guard value - lowest >= 3, value >= 25, time - settleStart >= 0.75,
+      abs(value - baseline) > 0.5
+    else { return nil }
+    baseline = value
+    lowestAngle = value
+    settleAngle = value
+    settleStart = time
+    return value
+  }
+
+  func setFollowOpenAngle(_ value: Bool) {
+    lock.lock()
+    defer { lock.unlock() }
+    following = value
+    settleAngle = nil
+    lowestAngle = angle
   }
 
   @discardableResult
@@ -70,6 +110,7 @@ final class LidMotion {
     enabled = value
     reset()
     updateTarget()
+    displayed = target
   }
 
   private func reset() {
