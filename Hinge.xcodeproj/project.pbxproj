@@ -172,6 +172,24 @@
 			<key>fileRef</key>
 			<string>560737C72BC60145ADB91F3E</string>
 		</dict>
+		<key>6B2D8F1A3C5E7A9B0D1F2E30</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>text.json.xcstrings</string>
+			<key>path</key>
+			<string>Localizable.xcstrings</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>8C3E9A2B4D6F8A0C1E3F5A71</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+			<key>fileRef</key>
+			<string>6B2D8F1A3C5E7A9B0D1F2E30</string>
+		</dict>
 		<key>38D78C33EBAE0C0ED96716CF</key>
 		<dict>
 			<key>isa</key>
@@ -218,6 +236,7 @@
 			<array>
 				<string>560737C72BC60145ADB91F3E</string>
 				<string>38D78C33EBAE0C0ED96716CF</string>
+				<string>6B2D8F1A3C5E7A9B0D1F2E30</string>
 			</array>
 			<key>path</key>
 			<string>Resources</string>
@@ -305,6 +324,7 @@
 			<array>
 				<string>51C92A1C51E552B028484AA9</string>
 				<string>F7F4970B79E37D1A4C454958</string>
+				<string>8C3E9A2B4D6F8A0C1E3F5A71</string>
 			</array>
 			<key>runOnlyForDeploymentPostprocessing</key>
 			<string>0</string>
@@ -514,6 +534,21 @@
 			<array>
 				<string>en</string>
 				<string>Base</string>
+				<string>ar</string>
+				<string>de</string>
+				<string>es</string>
+				<string>fr</string>
+				<string>it</string>
+				<string>ja</string>
+				<string>ko</string>
+				<string>nl</string>
+				<string>pl</string>
+				<string>pt-BR</string>
+				<string>ru</string>
+				<string>tr</string>
+				<string>vi</string>
+				<string>zh-Hans</string>
+				<string>zh-Hant</string>
 			</array>
 			<key>mainGroup</key>
 			<string>B28B7AF69320201D1CF206EB</string>

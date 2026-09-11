@@ -49,7 +49,7 @@ final class DesktopRenderer: NSObject, MTKViewDelegate {
 
   init(resources: Bundle, motion: LidMotion) throws {
     guard let device = MTLCreateSystemDefaultDevice(), let queue = device.makeCommandQueue() else {
-      throw DesktopError.message("Metal is unavailable on this Mac.")
+      throw DesktopError.message(String(localized: "Metal is unavailable on this Mac."))
     }
     self.device = device
     self.queue = queue
@@ -58,7 +58,8 @@ final class DesktopRenderer: NSObject, MTKViewDelegate {
     self.extend = MPSImageBilinearScale(device: device)
     self.extend.edgeMode = .clamp
     guard let sourceURL = resources.url(forResource: "Fold", withExtension: "metal") else {
-      throw DesktopError.message("The desktop renderer is missing. Rebuild the app.")
+      throw DesktopError.message(
+        String(localized: "The desktop renderer is missing. Rebuild the app."))
     }
     let library = try device.makeLibrary(
       source: String(contentsOf: sourceURL, encoding: .utf8), options: nil)
@@ -90,19 +91,20 @@ final class DesktopRenderer: NSObject, MTKViewDelegate {
         guard self.prepareBlur(width: width, height: height),
           let command = self.queue.makeCommandBuffer()
         else {
-          throw DesktopError.message("Could not prepare the desktop renderer.")
+          throw DesktopError.message(String(localized: "Could not prepare the desktop renderer."))
         }
         let descriptor = MTLTextureDescriptor.texture2DDescriptor(
           pixelFormat: .bgra8Unorm, width: width, height: height, mipmapped: false)
         descriptor.storageMode = .private
         descriptor.usage = [.shaderRead, .renderTarget]
         guard let source = self.device.makeTexture(descriptor: descriptor) else {
-          throw DesktopError.message("Could not allocate the desktop texture.")
+          throw DesktopError.message(String(localized: "Could not allocate the desktop texture."))
         }
         descriptor.width = 32
         descriptor.height = 32
         guard let destination = self.device.makeTexture(descriptor: descriptor) else {
-          throw DesktopError.message("Could not allocate the renderer warmup texture.")
+          throw DesktopError.message(
+            String(localized: "Could not allocate the renderer warmup texture."))
         }
         let sourcePass = MTLRenderPassDescriptor()
         sourcePass.colorAttachments[0].texture = source
@@ -110,11 +112,11 @@ final class DesktopRenderer: NSObject, MTKViewDelegate {
         sourcePass.colorAttachments[0].storeAction = .store
         sourcePass.colorAttachments[0].clearColor = MTLClearColorMake(0, 0, 0, 1)
         guard let clear = command.makeRenderCommandEncoder(descriptor: sourcePass) else {
-          throw DesktopError.message("Could not initialize the desktop texture.")
+          throw DesktopError.message(String(localized: "Could not initialize the desktop texture."))
         }
         clear.endEncoding()
         guard self.encodeBlur(command: command, texture: source) else {
-          throw DesktopError.message("Could not prepare the desktop renderer.")
+          throw DesktopError.message(String(localized: "Could not prepare the desktop renderer."))
         }
         let pass = MTLRenderPassDescriptor()
         pass.colorAttachments[0].texture = destination
@@ -123,7 +125,7 @@ final class DesktopRenderer: NSObject, MTKViewDelegate {
         guard
           self.encodeFold(command: command, pass: pass, texture: source, progress: 0.5, opacity: 1)
         else {
-          throw DesktopError.message("Could not prepare the fold pipeline.")
+          throw DesktopError.message(String(localized: "Could not prepare the fold pipeline."))
         }
         command.addCompletedHandler { command in
           if let error = command.error {
