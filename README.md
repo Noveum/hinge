@@ -10,7 +10,7 @@ ScreenCaptureKit supplies your live desktop, and Metal adds perspective and prog
 
 ## Install
 
-Requires an Apple silicon MacBook with a supported lid sensor and macOS 14 or later.
+Requires an Apple silicon MacBook with a supported lid sensor and macOS 14 or later. Not every MacBook has one; Hinge tells you if yours doesn't.
 
 [Download Hinge](https://hinge.noveum.ai/download), open the DMG, and drag Hinge into Applications. This prototype is not notarized; macOS may ask you to approve it under Privacy & Security.
 
