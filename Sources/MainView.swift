@@ -26,16 +26,18 @@ struct MainView: View {
 
   private var header: some View {
     ZStack {
-      Text(navigator.screen == .main ? "Hinge" : "Settings")
+      Text(navigator.screen == .main ? "Hinge" : String(localized: "Settings"))
         .font(.system(size: 13, weight: .semibold))
       HStack(spacing: 0) {
         if navigator.screen == .settings {
-          HeaderButton(symbol: "chevron.left", help: "Back") { navigator.screen = .main }
-            .keyboardShortcut(.escape, modifiers: [])
+          HeaderButton(symbol: "chevron.left", help: String(localized: "Back")) {
+            navigator.screen = .main
+          }
+          .keyboardShortcut(.escape, modifiers: [])
         }
         Spacer(minLength: 0)
         if navigator.screen == .main {
-          HeaderButton(symbol: "gearshape.fill", help: "Settings") {
+          HeaderButton(symbol: "gearshape.fill", help: String(localized: "Settings")) {
             navigator.screen = .settings
           }
           .keyboardShortcut(",", modifiers: .command)
@@ -97,7 +99,7 @@ struct MainView: View {
           .multilineTextAlignment(.center)
           .fixedSize(horizontal: false, vertical: true)
       }
-      Button(desktop.isEnabled ? "Turn off" : "Turn on") {
+      Button(desktop.isEnabled ? String(localized: "Turn off") : String(localized: "Turn on")) {
         desktop.setEnabled(!desktop.isEnabled)
       }
       .buttonStyle(.borderedProminent)
@@ -112,11 +114,15 @@ struct MainView: View {
 
   private var positionCard: some View {
     SettingsGroup(
-      title: "Open position",
-      footnote: "Starts at 100°. Set your comfortable open position once, and Hinge remembers it."
+      title: String(localized: "Open position"),
+      footnote: String(
+        localized:
+          "Starts at 100°. Set your comfortable open position once, and Hinge remembers it.")
     ) {
       SettingsRow(
-        "angle", tint: .indigo, title: "Open position", subtitle: "\(Int(desktop.openAngle))°"
+        "angle", tint: .indigo, title: String(localized: "Open position"),
+        subtitle: Measurement(value: desktop.openAngle, unit: UnitAngle.degrees).formatted(
+          .measurement(width: .narrow, numberFormatStyle: .number.precision(.fractionLength(0))))
       ) {
         Button("Set") { desktop.setOpenPosition() }
           .controlSize(.small)
@@ -127,7 +133,7 @@ struct MainView: View {
   }
 
   private func errorCard(_ message: String) -> some View {
-    SettingsGroup(title: "Attention") {
+    SettingsGroup(title: String(localized: "Attention")) {
       SettingsRow("exclamationmark.triangle.fill", tint: .orange, title: message) {
         if desktop.needsPermission {
           Button("Open Settings", action: openScreenRecordingSettings)
@@ -138,17 +144,17 @@ struct MainView: View {
   }
 
   private var title: String {
-    if desktop.isActive { return "On" }
-    if desktop.isStarting { return "Starting…" }
-    return desktop.isEnabled ? "Waiting…" : "Off"
+    if desktop.isActive { return String(localized: "On") }
+    if desktop.isStarting { return String(localized: "Starting…") }
+    return desktop.isEnabled ? String(localized: "Waiting…") : String(localized: "Off")
   }
 
   private var subtitle: String {
-    if desktop.isActive { return "Your desktop bends as the lid closes." }
-    if desktop.isStarting { return "Getting the desktop and the sensor ready." }
-    if !desktop.sensorAvailable { return "Waiting for the lid angle sensor." }
-    if desktop.isEnabled { return "Hinge is on but not running yet." }
-    return "Turn Hinge on to follow the lid."
+    if desktop.isActive { return String(localized: "Your desktop bends as the lid closes.") }
+    if desktop.isStarting { return String(localized: "Getting the desktop and the sensor ready.") }
+    if !desktop.sensorAvailable { return String(localized: "Waiting for the lid angle sensor.") }
+    if desktop.isEnabled { return String(localized: "Hinge is on but not running yet.") }
+    return String(localized: "Turn Hinge on to follow the lid.")
   }
 }
 

@@ -25,6 +25,8 @@ open build/Hinge.app
 
 Allow Screen Recording, reopen Hinge if prompted, and turn it on. It turns itself back on the next time you open it. The starting angle is 100°. Prefer something else? Get comfy and click **Set open position**. Hinge remembers.
 
+Hinge speaks your Mac's language: English, Simplified and Traditional Chinese, Japanese, Korean, German, French, Spanish, Italian, Brazilian Portuguese, Russian, Dutch, Turkish, Polish, Arabic and Vietnamese. To use a different one, pick it under **Settings > Controls > Language**.
+
 ## Got an idea?
 
 Feature requests are welcome. [Open an issue](https://github.com/Noveum/hinge/issues) or just shoot a PR. Small fixes, smoother motion, fun ideas: come play.
