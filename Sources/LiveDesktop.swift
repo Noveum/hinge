@@ -38,7 +38,10 @@ final class LiveDesktop: NSObject, ObservableObject {
   @Published private(set) var sideFill: SideFill
   @Published private(set) var error: String?
   @Published private(set) var needsPermission = false
+  private static let missingSensorMessage =
+    "This Mac doesn't appear to have a lid angle sensor, so Hinge can't follow the lid."
   private let sensor = LidSensor()
+  private var sensorMissing = false
   private let motion: LidMotion
   private var stream: SCStream?
   private var frames: ScreenFrames?
@@ -73,12 +76,23 @@ final class LiveDesktop: NSObject, ObservableObject {
         guard let self else { return }
         if update.availabilityChanged {
           self.sensorAvailable = update.available
+          if update.available, self.sensorMissing {
+            self.sensorMissing = false
+            if self.error == Self.missingSensorMessage { self.error = nil }
+          }
           if !update.available, self.isActive || self.isStarting {
             self.stop()
             self.error = "The lid sensor stopped responding. Turn Hinge on again to reconnect."
           }
         }
         if update.beganClosing { self.beginRendering() }
+      }
+    }
+    sensor.onMissing = { [weak self] in
+      Task { @MainActor [weak self] in
+        guard let self, !self.sensorAvailable else { return }
+        self.sensorMissing = true
+        if self.error == nil { self.error = Self.missingSensorMessage }
       }
     }
     sensor.start()
@@ -148,7 +162,10 @@ final class LiveDesktop: NSObject, ObservableObject {
     needsPermission = false
     guard sensorAvailable else {
       sensor.reconnect()
-      error = "The lid sensor is unavailable. Reconnecting, try turning Hinge on again in a moment."
+      error =
+        sensorMissing
+        ? Self.missingSensorMessage
+        : "The lid sensor is unavailable. Reconnecting, try turning Hinge on again in a moment."
       return
     }
     guard CGPreflightScreenCaptureAccess() || CGRequestScreenCaptureAccess() else {
