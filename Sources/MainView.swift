@@ -146,6 +146,7 @@ struct MainView: View {
   private var subtitle: String {
     if desktop.isActive { return "Your desktop bends as the lid closes." }
     if desktop.isStarting { return "Getting the desktop and the sensor ready." }
+    if desktop.isWaitingForDisplay { return "Waiting for the built-in display to turn on." }
     if !desktop.sensorAvailable { return "Waiting for the lid angle sensor." }
     if desktop.isEnabled { return "Hinge is on but not running yet." }
     return "Turn Hinge on to follow the lid."
