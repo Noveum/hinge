@@ -34,6 +34,7 @@ final class LiveDesktop: NSObject, ObservableObject {
   @Published private(set) var isStarting = false
   @Published private(set) var sensorAvailable = false
   @Published private(set) var openAngle: Double
+  @Published private(set) var effectStrength: Double
   @Published private(set) var error: String?
   @Published private(set) var needsPermission = false
   private let sensor = LidSensor()
@@ -55,7 +56,11 @@ final class LiveDesktop: NSObject, ObservableObject {
   override init() {
     let savedAngle = UserDefaults.standard.object(forKey: "openAngle") as? Double ?? 100
     let openAngle = savedAngle.isFinite && (25...180).contains(savedAngle) ? savedAngle : 100
+    let savedStrength = UserDefaults.standard.object(forKey: "effectStrength") as? Double ?? 1
+    let effectStrength =
+      savedStrength.isFinite && (0.25...1).contains(savedStrength) ? savedStrength : 1
     self.openAngle = openAngle
+    self.effectStrength = effectStrength
     motion = LidMotion(openAngle: openAngle)
     super.init()
     let motion = motion
@@ -120,6 +125,15 @@ final class LiveDesktop: NSObject, ObservableObject {
     metalView?.draw()
   }
 
+  func setEffectStrength(_ value: Double) {
+    let strength = value.isFinite ? min(max(value, 0.25), 1) : 1
+    guard strength != effectStrength else { return }
+    effectStrength = strength
+    UserDefaults.standard.set(strength, forKey: "effectStrength")
+    renderer?.effectStrength = Float(strength)
+    NSHapticFeedbackManager.defaultPerformer.perform(.levelChange, performanceTime: .now)
+  }
+
   func start() async {
     guard !isStarting, !isActive else { return }
     error = nil
@@ -140,6 +154,7 @@ final class LiveDesktop: NSObject, ObservableObject {
     self.session = session
     do {
       let renderer = try DesktopRenderer(resources: .main, motion: motion)
+      renderer.effectStrength = Float(effectStrength)
       let content = try await SCShareableContent.excludingDesktopWindows(
         false, onScreenWindowsOnly: true)
       guard self.session == session else { return }
