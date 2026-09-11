@@ -65,12 +65,13 @@ struct MainView: View {
 
   private var home: some View {
     VStack(spacing: 20) {
+      Spacer(minLength: 8)
       hero
       if let error = desktop.error { errorCard(error) }
-      Spacer(minLength: 12)
+      Spacer(minLength: 8)
       positionCard
     }
-    .padding(EdgeInsets(top: 26, leading: 20, bottom: 22, trailing: 20))
+    .padding(EdgeInsets(top: 20, leading: 20, bottom: 22, trailing: 20))
   }
 
   private var hero: some View {
