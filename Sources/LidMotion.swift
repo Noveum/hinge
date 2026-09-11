@@ -70,6 +70,7 @@ final class LidMotion {
     enabled = value
     reset()
     updateTarget()
+    displayed = target
   }
 
   private func reset() {
