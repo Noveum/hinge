@@ -37,6 +37,20 @@ final class DesktopRenderer: NSObject, MTKViewDelegate {
     self.queue = queue
     self.motion = motion
     self.scale = MPSImageBilinearScale(device: device)
+    pipeline = try Self.foldPipeline(device: device, resources: resources)
+    super.init()
+    CVMetalTextureCacheCreate(kCFAllocatorDefault, nil, device, nil, &textureCache)
+  }
+
+  private static let pipelineLock = NSLock()
+  private static var cachedPipeline: (device: MTLDevice, state: MTLRenderPipelineState)?
+
+  private static func foldPipeline(device: MTLDevice, resources: Bundle) throws
+    -> MTLRenderPipelineState
+  {
+    pipelineLock.lock()
+    defer { pipelineLock.unlock() }
+    if let cached = cachedPipeline, cached.device === device { return cached.state }
     guard let sourceURL = resources.url(forResource: "Fold", withExtension: "metal") else {
       throw DesktopError.message("The desktop renderer is missing. Rebuild the app.")
     }
@@ -46,9 +60,9 @@ final class DesktopRenderer: NSObject, MTKViewDelegate {
     descriptor.vertexFunction = library.makeFunction(name: "foldVertex")
     descriptor.fragmentFunction = library.makeFunction(name: "foldFragment")
     descriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
-    pipeline = try device.makeRenderPipelineState(descriptor: descriptor)
-    super.init()
-    CVMetalTextureCacheCreate(kCFAllocatorDefault, nil, device, nil, &textureCache)
+    let state = try device.makeRenderPipelineState(descriptor: descriptor)
+    cachedPipeline = (device, state)
+    return state
   }
 
   var hasFrame: Bool {
