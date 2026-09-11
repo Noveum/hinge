@@ -4,7 +4,7 @@ Give your MacBook desktop a little bend. Close the lid and watch your screen sof
 
 ## For the nerds
 
-Hinge reads the lid angle 120 times a second and turns it into a continuous animation. Slow tilt, slow bend. Quick tilt, quick bend. A little smoothing takes the steps out of whole-degree sensor readings.
+Hinge reads the lid angle as often as the sensor updates it, in hundredths of a degree where your Mac reports them, and turns it into a continuous animation. Slow tilt, slow bend. Quick tilt, quick bend. A little smoothing fills in between readings.
 
 ScreenCaptureKit supplies your live desktop, and Metal adds perspective and progressive blur at 60 fps. Everything stays in memory on your Mac. No recordings, no uploads.
 
