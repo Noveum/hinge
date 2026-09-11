@@ -35,7 +35,7 @@ The default open position is 100 degrees. The calibration button captures a comf
 
 The input is a stream of integer-degree readings. A 0.6-degree noise band prevents alternating adjacent readings from constantly moving the target. Angular velocity is estimated with a 60 ms time constant. Prediction looks ahead by 35 ms and is limited to 0.75 degrees. Closure is mapped from the calibrated baseline toward eight degrees.
 
-A critically damped second-order filter maintains continuous position and velocity. Its response increases from 30 to 55 radians per second as estimated motion speeds up. The output keeps its direction between readings until the sensor indicates a reversal. This avoids small backward corrections from decaying predictions. Long gaps between rendered frames reset the integration step, preventing an initial jump after resting.
+A critically damped second-order filter maintains continuous position and velocity. Its response increases from 30 to 55 radians per second as estimated motion speeds up. The output keeps its direction between readings until the sensor indicates a reversal. This avoids small backward corrections from decaying predictions. Long gaps between rendered frames reset the integration step, preventing an initial jump after resting. Enabling the effect seeds the filter at the closure implied by the current angle, so a session that starts while the lid is partly closed unwinds from that fold instead of animating into it.
 
 There is no fixed playback timeline or additional SwiftUI animation in the motion path. The speed-dependent smoothing follows the general principle described by the [1 Euro filter authors](https://github.com/casiez/OneEuroFilter), using stronger smoothing at low speeds. The implementation uses a damped second-order response rather than that library's first-order filter.
 
@@ -53,4 +53,4 @@ These checks do not measure physical end-to-end latency, which also depends on t
 
 ## Recovery
 
-Sensor loss cancels both startup and active capture. Switching Spaces uses the full display frame directly, without enumerating shareable content. Capture restarts only when the display area changes. Wake recovery waits up to five seconds for the sensor, and duplicate wake notifications do not interrupt an active session. Turning Hinge off cancels pending recovery.
+Sensor loss cancels both startup and active capture. Switching Spaces uses the full display frame directly, without enumerating shareable content. Capture restarts only when the display area changes. Wake recovery polls the sensor every 50 ms for up to five seconds and retries the connection once per second, so a session restarts early enough to animate the reopening that follows a full close. Duplicate wake notifications do not interrupt an active session. Turning Hinge off cancels pending recovery.

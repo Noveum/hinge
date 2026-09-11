@@ -389,11 +389,11 @@ final class LiveDesktop: NSObject, ObservableObject {
     guard resumeAfterWake else { return }
     wakeTask = Task { [weak self] in
       guard let self else { return }
-      for _ in 0..<5 {
-        do { try await Task.sleep(for: .seconds(1)) } catch { return }
+      for attempt in 0..<100 {
         guard self.resumeAfterWake, !Task.isCancelled else { return }
         if self.sensorAvailable { break }
-        self.sensor.reconnect()
+        if attempt > 0, attempt.isMultiple(of: 20) { self.sensor.reconnect() }
+        do { try await Task.sleep(for: .milliseconds(50)) } catch { return }
       }
       guard self.resumeAfterWake, !Task.isCancelled else { return }
       self.wakeTask = nil
