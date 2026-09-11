@@ -35,6 +35,7 @@ final class LiveDesktop: NSObject, ObservableObject {
   @Published private(set) var sensorAvailable = false
   @Published private(set) var openAngle: Double
   @Published private(set) var effectStrength: Double
+  @Published private(set) var sideFill: SideFill
   @Published private(set) var error: String?
   @Published private(set) var needsPermission = false
   @Published private(set) var isEnabled = UserDefaults.standard.bool(forKey: "effectEnabled")
@@ -68,6 +69,7 @@ final class LiveDesktop: NSObject, ObservableObject {
       savedStrength.isFinite && (0.25...1).contains(savedStrength) ? savedStrength : 1
     self.openAngle = openAngle
     self.effectStrength = effectStrength
+    sideFill = UserDefaults.standard.string(forKey: "sideFill").flatMap(SideFill.init) ?? .blur
     motion = LidMotion(openAngle: openAngle)
     super.init()
     let motion = motion
@@ -166,6 +168,12 @@ final class LiveDesktop: NSObject, ObservableObject {
     NSHapticFeedbackManager.defaultPerformer.perform(.levelChange, performanceTime: .now)
   }
 
+  func setSideFill(_ fill: SideFill) {
+    sideFill = fill
+    UserDefaults.standard.set(fill.rawValue, forKey: "sideFill")
+    renderer?.sideFill = fill
+  }
+
   func start(promptForPermission: Bool = true) async {
     guard !isStarting, !isActive else { return }
     error = nil
@@ -189,6 +197,7 @@ final class LiveDesktop: NSObject, ObservableObject {
     do {
       let renderer = try DesktopRenderer(resources: .main, motion: motion)
       renderer.effectStrength = Float(effectStrength)
+      renderer.sideFill = sideFill
       let content = try await SCShareableContent.excludingDesktopWindows(
         false, onScreenWindowsOnly: false)
       guard self.session == session else { return }

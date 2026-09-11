@@ -43,6 +43,23 @@ struct SettingsView: View {
             .accessibilityLabel("Reset effect strength to default")
         }
       }
+      SettingsDivider()
+      SettingsRow(
+        "square.lefthalf.filled", tint: .indigo, title: "Sides",
+        subtitle: "Beside the folded desktop"
+      ) {
+        Picker(
+          "Sides",
+          selection: Binding(get: { desktop.sideFill }, set: { desktop.setSideFill($0) })
+        ) {
+          Text("Blur").tag(SideFill.blur)
+          Text("Black").tag(SideFill.black)
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+        .fixedSize()
+        .controlSize(.small)
+      }
     }
   }
 
