@@ -16,10 +16,14 @@ struct MainView: View {
   @ObservedObject var navigator: Navigator
 
   var body: some View {
-    VStack(spacing: 0) {
-      header
-      Divider().opacity(0.6)
-      content
+    GeometryReader { proxy in
+      VStack(spacing: 0) {
+        header
+          .frame(height: proxy.safeAreaInsets.top)
+        Divider().opacity(0.6)
+        content
+      }
+      .ignoresSafeArea(.container, edges: .top)
     }
     .frame(width: 460, height: 580)
   }
@@ -44,7 +48,7 @@ struct MainView: View {
       .padding(.leading, 76)
       .padding(.trailing, 12)
     }
-    .frame(height: 40)
+    .frame(maxHeight: .infinity)
     .background(HeaderMaterial().ignoresSafeArea())
   }
 
