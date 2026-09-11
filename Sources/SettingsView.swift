@@ -3,124 +3,235 @@ import SwiftUI
 
 struct SettingsView: View {
   @ObservedObject var desktop: LiveDesktop
+  @State private var page = Page.effect
+
+  enum Page: String, CaseIterable, Identifiable {
+    case effect
+    case general
+
+    var id: String { rawValue }
+
+    var title: String {
+      switch self {
+      case .effect: "Effect"
+      case .general: "General"
+      }
+    }
+
+    var symbol: String {
+      switch self {
+      case .effect: "laptopcomputer"
+      case .general: "gearshape.fill"
+      }
+    }
+
+    var tint: Color {
+      switch self {
+      case .effect: .blue
+      case .general: .gray
+      }
+    }
+  }
+
+  var body: some View {
+    HStack(spacing: 0) {
+      sidebar
+        .frame(width: 180)
+        .background(SidebarMaterial().ignoresSafeArea())
+      Divider().ignoresSafeArea()
+      switch page {
+      case .effect: EffectPage(desktop: desktop)
+      case .general: GeneralPage(desktop: desktop)
+      }
+    }
+    .frame(width: 620, height: 460)
+  }
+
+  private var sidebar: some View {
+    VStack(alignment: .leading, spacing: 2) {
+      Color.clear.frame(height: 10)
+      ForEach(Page.allCases) { item in
+        Button {
+          page = item
+        } label: {
+          HStack(spacing: 10) {
+            SettingsIcon(symbol: item.symbol, tint: item.tint)
+            Text(item.title)
+              .font(.system(size: 13))
+              .foregroundStyle(page == item ? Color.white : Color.primary)
+            Spacer(minLength: 0)
+          }
+          .padding(.horizontal, 8)
+          .padding(.vertical, 6)
+          .background(
+            RoundedRectangle(cornerRadius: 7, style: .continuous)
+              .fill(page == item ? Color.accentColor : .clear)
+          )
+          .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+      }
+      Spacer(minLength: 0)
+    }
+    .padding(.horizontal, 9)
+  }
+}
+
+private struct EffectPage: View {
+  @ObservedObject var desktop: LiveDesktop
+
+  var body: some View {
+    SettingsPage {
+      SettingsGroup(title: "Hinge") {
+        SettingsRow(
+          "power", tint: desktop.isActive ? .green : .gray, title: "Follow the lid",
+          subtitle: status
+        ) {
+          Toggle(
+            "Follow the lid",
+            isOn: Binding(
+              get: { desktop.isActive || desktop.isStarting },
+              set: { enabled in
+                if enabled { Task { await desktop.start() } } else { desktop.stop() }
+              })
+          )
+          .toggleStyle(.switch)
+          .controlSize(.small)
+          .labelsHidden()
+          .disabled(desktop.isStarting)
+        }
+        if let error = desktop.error {
+          SettingsDivider()
+          SettingsRow("exclamationmark.triangle.fill", tint: .orange, title: error) {
+            if desktop.needsPermission {
+              Button("Open Settings", action: openScreenRecordingSettings)
+                .controlSize(.small)
+            }
+          }
+        }
+      }
+      SettingsGroup(title: "Look") {
+        SettingsRow(
+          "slider.horizontal.3", tint: .orange, title: "Effect strength",
+          subtitle: "\(Int(desktop.effectStrength * 100))%"
+        ) {
+          HStack(spacing: 8) {
+            Slider(
+              value: Binding(
+                get: { desktop.effectStrength },
+                set: { desktop.setEffectStrength($0) }),
+              in: 0.25...1, step: 0.05
+            )
+            .frame(width: 120)
+            .accessibilityLabel("Effect strength")
+            .accessibilityValue("\(Int(desktop.effectStrength * 100)) percent")
+            Button("Default") { desktop.setEffectStrength(1) }
+              .controlSize(.small)
+              .fixedSize()
+              .disabled(desktop.effectStrength == 1)
+              .help("Reset effect strength to 100%")
+              .accessibilityLabel("Reset effect strength to default")
+          }
+        }
+      }
+      SettingsGroup(
+        title: "Open position",
+        footnote:
+          "Starts at 100°. Set your comfortable open position once, and Hinge remembers it."
+      ) {
+        SettingsRow(
+          "angle", tint: .indigo, title: "Open position", subtitle: "\(Int(desktop.openAngle))°"
+        ) {
+          Button("Set open position") { desktop.setOpenPosition() }
+            .controlSize(.small)
+            .disabled(!desktop.sensorAvailable || desktop.isStarting)
+        }
+      }
+    }
+  }
+
+  private var status: String {
+    if desktop.isStarting { return "Starting…" }
+    return desktop.isActive ? "On. Your desktop bends as the lid closes." : "Off"
+  }
+}
+
+private struct GeneralPage: View {
+  @ObservedObject var desktop: LiveDesktop
   @State private var loginItemStatus = SMAppService.mainApp.status
   @State private var loginItemError: String?
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 24) {
-      HStack(spacing: 14) {
-        Image(systemName: "laptopcomputer")
-          .font(.system(size: 29, weight: .light))
-          .foregroundStyle(.blue)
-          .frame(width: 54, height: 54)
-          .background(.blue.opacity(0.12), in: RoundedRectangle(cornerRadius: 15))
-        VStack(alignment: .leading, spacing: 4) {
-          Text("Hinge").font(.system(size: 26, weight: .semibold))
-          Text("Your desktop follows your lid.")
-            .font(.system(size: 12))
-            .foregroundStyle(.secondary)
-        }
-      }
-      VStack(spacing: 18) {
-        Toggle(
-          isOn: Binding(
-            get: { desktop.isActive || desktop.isStarting },
-            set: { enabled in
-              if enabled { Task { await desktop.start() } } else { desktop.stop() }
-            })
+    SettingsPage {
+      SettingsGroup(title: "Controls") {
+        SettingsRow(
+          "power", tint: .blue, title: "Launch at login", subtitle: loginItemError ?? loginItemNote
         ) {
-          HStack(spacing: 7) {
-            Circle().fill(desktop.isActive ? Color.green : Color.secondary.opacity(0.45))
-              .frame(width: 6, height: 6)
-            Text(desktop.isStarting ? "Starting…" : desktop.isActive ? "On" : "Off")
-              .fontWeight(.medium)
+          if loginItemStatus == .requiresApproval {
+            Button("Open Login Items") { SMAppService.openSystemSettingsLoginItems() }
+              .controlSize(.small)
           }
+          Toggle("Launch at login", isOn: launchAtLogin)
+            .toggleStyle(.switch)
+            .controlSize(.small)
+            .labelsHidden()
         }
-        .toggleStyle(.switch)
-        .disabled(desktop.isStarting)
-        Divider()
-        HStack {
-          VStack(alignment: .leading, spacing: 4) {
-            Text("Effect strength").fontWeight(.medium)
-            Text("\(Int(desktop.effectStrength * 100))%")
-              .foregroundStyle(.secondary)
-              .monospacedDigit()
-          }
-          Spacer()
-          Slider(
-            value: Binding(
-              get: { desktop.effectStrength },
-              set: { desktop.setEffectStrength($0) }),
-            in: 0.25...1, step: 0.05
-          )
-          .frame(width: 100)
-          .accessibilityLabel("Effect strength")
-          .accessibilityValue("\(Int(desktop.effectStrength * 100)) percent")
-          Button("Default") { desktop.setEffectStrength(1) }
-            .disabled(desktop.effectStrength == 1)
-            .help("Reset effect strength to 100%")
-            .accessibilityLabel("Reset effect strength to default")
-        }
-        Divider()
-        HStack {
-          VStack(alignment: .leading, spacing: 4) {
-            Text("Open position").fontWeight(.medium)
-            Text("\(Int(desktop.openAngle))°")
-              .foregroundStyle(.secondary)
-              .monospacedDigit()
-          }
-          Spacer()
-          Button("Set open position") { desktop.setOpenPosition() }
-            .disabled(!desktop.sensorAvailable || desktop.isStarting)
-        }
-        Divider()
-        Toggle("Launch at login", isOn: launchAtLogin)
-          .toggleStyle(.switch)
-        if loginItemStatus == .requiresApproval {
-          Button("Approval required in Login Items") {
-            SMAppService.openSystemSettingsLoginItems()
-          }
-          .buttonStyle(.link)
+        SettingsDivider()
+        SettingsRow("keyboard", tint: .gray, title: "Turn Hinge on or off") {
+          Text("⌃⌥H")
+            .font(.system(size: 12, weight: .medium))
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 7)
+            .padding(.vertical, 3)
+            .background(Color.primary.opacity(0.07), in: RoundedRectangle(cornerRadius: 5))
         }
       }
-      .font(.system(size: 12))
-      if let loginItemError {
-        Text(loginItemError)
-          .font(.system(size: 12))
-          .foregroundStyle(.orange)
-          .fixedSize(horizontal: false, vertical: true)
+      SettingsGroup(
+        title: "Status",
+        footnote:
+          "Hinge reads your display only to draw the fold. Frames stay in memory on your Mac."
+      ) {
+        let allowed = CGPreflightScreenCaptureAccess()
+        SettingsRow(
+          "rectangle.dashed.badge.record", tint: .red, title: "Screen Recording",
+          subtitle: allowed ? "Allowed" : "Needed to show your live desktop"
+        ) {
+          if allowed {
+            Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+          } else {
+            Button("Open Settings", action: openScreenRecordingSettings)
+              .controlSize(.small)
+          }
+        }
+        SettingsDivider()
+        SettingsRow(
+          "laptopcomputer", tint: .teal, title: "Lid angle sensor",
+          subtitle: desktop.sensorAvailable ? "Connected" : "Not connected"
+        ) {
+          Circle()
+            .fill(desktop.sensorAvailable ? Color.green : Color.orange)
+            .frame(width: 8, height: 8)
+        }
       }
-      if let error = desktop.error {
-        VStack(alignment: .leading, spacing: 8) {
-          Text(error).foregroundStyle(.orange)
-          if desktop.needsPermission {
-            Button("Open Screen Recording settings") {
-              NSWorkspace.shared.open(
-                URL(
-                  string:
-                    "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")!
-              )
+      SettingsGroup(title: "About") {
+        SettingsRow(
+          title: "Hinge \(version)", subtitle: "Your desktop follows your lid.",
+          leading: { Image(nsImage: NSApp.applicationIconImage).resizable() },
+          trailing: {
+            if let project = URL(string: "https://github.com/Noveum/hinge") {
+              Link("GitHub", destination: project).font(.system(size: 12))
             }
-            .buttonStyle(.link)
-          }
-        }
-        .font(.system(size: 12))
-        .fixedSize(horizontal: false, vertical: true)
-      } else {
-        Text("Starts at 100°. Set your comfortable open position once, and Hinge remembers it.")
-          .font(.system(size: 12))
-          .foregroundStyle(.secondary)
-          .fixedSize(horizontal: false, vertical: true)
+          })
       }
     }
-    .padding(28)
-    .padding(.top, 12)
-    .frame(width: 376)
     .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification))
-    {
-      _ in
+    { _ in
       loginItemStatus = SMAppService.mainApp.status
     }
+  }
+
+  private var loginItemNote: String? {
+    loginItemStatus == .requiresApproval ? "Allow Hinge in Login Items to finish." : nil
   }
 
   private var launchAtLogin: Binding<Bool> {
@@ -144,4 +255,16 @@ struct SettingsView: View {
     }
     loginItemStatus = SMAppService.mainApp.status
   }
+
+  private var version: String {
+    Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
+  }
+}
+
+private func openScreenRecordingSettings() {
+  guard
+    let url = URL(
+      string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")
+  else { return }
+  NSWorkspace.shared.open(url)
 }
