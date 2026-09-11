@@ -82,34 +82,6 @@ private struct EffectPage: View {
 
   var body: some View {
     SettingsPage {
-      SettingsGroup(title: "Hinge") {
-        SettingsRow(
-          "power", tint: desktop.isActive ? .green : .gray, title: "Follow the lid",
-          subtitle: status
-        ) {
-          Toggle(
-            "Follow the lid",
-            isOn: Binding(
-              get: { desktop.isActive || desktop.isStarting },
-              set: { enabled in
-                if enabled { Task { await desktop.start() } } else { desktop.stop() }
-              })
-          )
-          .toggleStyle(.switch)
-          .controlSize(.small)
-          .labelsHidden()
-          .disabled(desktop.isStarting)
-        }
-        if let error = desktop.error {
-          SettingsDivider()
-          SettingsRow("exclamationmark.triangle.fill", tint: .orange, title: error) {
-            if desktop.needsPermission {
-              Button("Open Settings", action: openScreenRecordingSettings)
-                .controlSize(.small)
-            }
-          }
-        }
-      }
       SettingsGroup(title: "Look") {
         SettingsRow(
           "slider.horizontal.3", tint: .orange, title: "Effect strength",
@@ -132,19 +104,6 @@ private struct EffectPage: View {
               .help("Reset effect strength to 100%")
               .accessibilityLabel("Reset effect strength to default")
           }
-        }
-      }
-      SettingsGroup(
-        title: "Open position",
-        footnote:
-          "Starts at 100°. Set your comfortable open position once, and Hinge remembers it."
-      ) {
-        SettingsRow(
-          "angle", tint: .indigo, title: "Open position", subtitle: "\(Int(desktop.openAngle))°"
-        ) {
-          Button("Set open position") { desktop.setOpenPosition() }
-            .controlSize(.small)
-            .disabled(!desktop.sensorAvailable || desktop.isStarting)
         }
       }
     }

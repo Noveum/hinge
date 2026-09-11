@@ -81,7 +81,10 @@ struct MainView: View {
   }
 
   private var positionCard: some View {
-    SettingsGroup(title: "Open position") {
+    SettingsGroup(
+      title: "Open position",
+      footnote: "Starts at 100°. Set your comfortable open position once, and Hinge remembers it."
+    ) {
       SettingsRow(
         "angle", tint: .indigo, title: "Open position", subtitle: "\(Int(desktop.openAngle))°"
       ) {
