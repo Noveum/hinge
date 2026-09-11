@@ -74,6 +74,14 @@ struct SettingsView: View {
             .disabled(!desktop.sensorAvailable || desktop.isStarting)
         }
         Divider()
+        Toggle(
+          "Pause capture at rest",
+          isOn: Binding(
+            get: { desktop.pauseCaptureAtRest }, set: { desktop.setPauseCaptureAtRest($0) })
+        )
+        .toggleStyle(.switch)
+        .help("Capture only while the lid folds, so the recording indicator stays off at rest.")
+        Divider()
         Toggle("Launch at login", isOn: launchAtLogin)
           .toggleStyle(.switch)
         if loginItemStatus == .requiresApproval {

@@ -23,6 +23,8 @@ make build
 open build/Hinge.app
 ```
 
+Hinge pauses capture while the lid rests, so the macOS recording indicator only lights up while your desktop is actually folding. That indicator is drawn by the system and no app can hide it.
+
 Allow Screen Recording, reopen Hinge if prompted, and turn it on. The starting angle is 100°. Prefer something else? Get comfy and click **Set open position**. Hinge remembers.
 
 ## Got an idea?

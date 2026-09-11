@@ -43,9 +43,15 @@ The sensor reads feature reports on a dedicated queue at 120 Hz while the effect
 
 The previous 12 ms first-order filter followed individual degree changes too closely. High rendering frame rates did not eliminate the visible stair-step input. The current motion filter smooths position and velocity together and suppresses quantization jitter. A synthetic replay checks slow and fast closure at 30, 60, and 120 input samples per second, held adjacent-degree noise, and reopening.
 
-Before On appears, an offscreen GPU pass initializes the blur textures, Gaussian kernels, and fold pipeline, and capture supplies its first frame. A transparent window stays ordered at rest with drawing paused, so closing does not need to allocate a new window surface. The first 2.5 percent of closure smoothly blends the captured image into the live desktop. At full reopening, a transparent frame is presented before drawing pauses.
+Before On appears, an offscreen GPU pass initializes the blur textures, Gaussian kernels, and fold pipeline, and capture supplies its first frame. A transparent window stays ordered at rest with drawing paused, so closing does not need to allocate a new window surface. The first 2.5 percent of closure smoothly blends the captured image into the live desktop. That blend is derived from progress alone, so it cannot cover a session that starts with the fold already underway: progress is past the threshold on the first drawn frame and the overlay would appear opaque and folded over a desktop that was flat one frame earlier. Those sessions also fade in over 160 ms of wall clock. The shader takes the lower of the two values, so the entry fade never shows more than the progress blend would allow, and a normal close from rest is unaffected because no entry fade is started for it. At full reopening, a transparent frame is presented before drawing pauses.
 
 These checks do not measure physical end-to-end latency, which also depends on the sensor, capture, GPU, and display.
+
+## Capture at rest
+
+macOS shows its screen recording indicator for as long as a capture stream runs, and an app cannot suppress it. Pausing capture at rest is optional and on by default. The stream stops three seconds after the fold returns to rest and a new one is built when the next fold begins, so the indicator tracks lid movement instead of staying lit for the whole session.
+
+The renderer keeps its last frame across a pause, so a fold starts on retained content while the new stream spins up rather than waiting on capture. The content filter and stream configuration are cached, which lets a resume skip shareable content enumeration and the blur warm up. Included windows are refreshed once the resumed stream is running. Turning the option off keeps a single stream running for the whole session, which is the earlier behavior.
 
 ## Implementation reference
 
