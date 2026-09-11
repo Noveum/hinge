@@ -50,9 +50,13 @@ struct SettingsView: View {
               set: { desktop.setEffectStrength($0) }),
             in: 0.25...1, step: 0.05
           )
-          .frame(width: 140)
+          .frame(width: 100)
           .accessibilityLabel("Effect strength")
           .accessibilityValue("\(Int(desktop.effectStrength * 100)) percent")
+          Button("Default") { desktop.setEffectStrength(1) }
+            .disabled(desktop.effectStrength == 1)
+            .help("Reset effect strength to 100%")
+            .accessibilityLabel("Reset effect strength to default")
         }
         Divider()
         HStack {
