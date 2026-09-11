@@ -97,12 +97,8 @@ struct MainView: View {
           .multilineTextAlignment(.center)
           .fixedSize(horizontal: false, vertical: true)
       }
-      Button(desktop.isActive ? "Turn off" : "Turn on") {
-        if desktop.isActive {
-          desktop.stop()
-        } else {
-          Task { await desktop.start() }
-        }
+      Button(desktop.isEnabled ? "Turn off" : "Turn on") {
+        desktop.setEnabled(!desktop.isEnabled)
       }
       .buttonStyle(.borderedProminent)
       .controlSize(.large)
@@ -142,14 +138,16 @@ struct MainView: View {
   }
 
   private var title: String {
+    if desktop.isActive { return "On" }
     if desktop.isStarting { return "Starting…" }
-    return desktop.isActive ? "On" : "Off"
+    return desktop.isEnabled ? "Waiting…" : "Off"
   }
 
   private var subtitle: String {
-    if desktop.isStarting { return "Getting the desktop and the sensor ready." }
     if desktop.isActive { return "Your desktop bends as the lid closes." }
+    if desktop.isStarting { return "Getting the desktop and the sensor ready." }
     if !desktop.sensorAvailable { return "Waiting for the lid angle sensor." }
+    if desktop.isEnabled { return "Hinge is on but not running yet." }
     return "Turn Hinge on to follow the lid."
   }
 }
