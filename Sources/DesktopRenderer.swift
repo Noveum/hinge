@@ -10,11 +10,9 @@ struct FoldParameters {
   var taper = DesktopRenderer.taper
 }
 
-enum SideFill: String, CaseIterable, Identifiable {
+enum SideFill: String {
   case blur
   case black
-
-  var id: String { rawValue }
 }
 
 final class DesktopRenderer: NSObject, MTKViewDelegate {
@@ -58,6 +56,7 @@ final class DesktopRenderer: NSObject, MTKViewDelegate {
     self.motion = motion
     self.scale = MPSImageBilinearScale(device: device)
     self.extend = MPSImageBilinearScale(device: device)
+    self.extend.edgeMode = .clamp
     guard let sourceURL = resources.url(forResource: "Fold", withExtension: "metal") else {
       throw DesktopError.message("The desktop renderer is missing. Rebuild the app.")
     }
@@ -114,7 +113,9 @@ final class DesktopRenderer: NSObject, MTKViewDelegate {
           throw DesktopError.message("Could not initialize the desktop texture.")
         }
         clear.endEncoding()
-        self.encodeBlur(command: command, texture: source)
+        guard self.encodeBlur(command: command, texture: source) else {
+          throw DesktopError.message("Could not prepare the desktop renderer.")
+        }
         let pass = MTLRenderPassDescriptor()
         pass.colorAttachments[0].texture = destination
         pass.colorAttachments[0].loadAction = .clear
@@ -155,6 +156,7 @@ final class DesktopRenderer: NSObject, MTKViewDelegate {
     else { return false }
     descriptor.width = smallWidth + 2 * padding
     descriptor.height = smallHeight
+    descriptor.usage = [.shaderRead, .shaderWrite, .renderTarget]
     var textures = [MTLTexture]()
     for _ in 0..<4 {
       guard let texture = device.makeTexture(descriptor: descriptor) else { return false }
@@ -176,43 +178,52 @@ final class DesktopRenderer: NSObject, MTKViewDelegate {
     return true
   }
 
-  private func encodeBlur(command: MTLCommandBuffer, texture: MTLTexture) {
-    guard let smallTexture, let tinyTexture, let flatTexture, let sideTexture, let flatKernel
-    else { return }
+  private func encodeBlur(command: MTLCommandBuffer, texture: MTLTexture) -> Bool {
+    guard let smallTexture, let sideTexture else { return false }
     scale.encode(commandBuffer: command, sourceTexture: texture, destinationTexture: smallTexture)
-    let fill: MTLTexture
-    if sideFill == .black {
-      extend.edgeMode = .zero
-      fill = smallTexture
-    } else {
+    switch sideFill {
+    case .black:
+      guard encodeClear(command: command, texture: sideTexture) else { return false }
+    case .blur:
+      guard let tinyTexture, let flatTexture, let flatKernel else { return false }
       scale.encode(
         commandBuffer: command, sourceTexture: smallTexture, destinationTexture: tinyTexture)
       flatKernel.encode(
         commandBuffer: command, sourceTexture: tinyTexture, destinationTexture: flatTexture)
-      extend.edgeMode = .clamp
-      fill = flatTexture
+      let transform = MPSScaleTransform(
+        scaleX: Double(smallTexture.width) / Double(flatTexture.width),
+        scaleY: Double(smallTexture.height) / Double(flatTexture.height),
+        translateX: Double(blurPadding), translateY: 0)
+      withUnsafePointer(to: transform) { transform in
+        extend.scaleTransform = transform
+        extend.encode(
+          commandBuffer: command, sourceTexture: flatTexture, destinationTexture: sideTexture)
+      }
+      extend.scaleTransform = nil
     }
-    let transform = MPSScaleTransform(
-      scaleX: Double(smallTexture.width) / Double(fill.width),
-      scaleY: Double(smallTexture.height) / Double(fill.height), translateX: Double(blurPadding),
-      translateY: 0)
-    withUnsafePointer(to: transform) { transform in
-      extend.scaleTransform = transform
-      extend.encode(commandBuffer: command, sourceTexture: fill, destinationTexture: sideTexture)
-    }
-    extend.scaleTransform = nil
-    if fill !== smallTexture, let blit = command.makeBlitCommandEncoder() {
-      blit.copy(
-        from: smallTexture, sourceSlice: 0, sourceLevel: 0, sourceOrigin: MTLOrigin(),
-        sourceSize: MTLSize(width: smallTexture.width, height: smallTexture.height, depth: 1),
-        to: sideTexture, destinationSlice: 0, destinationLevel: 0,
-        destinationOrigin: MTLOrigin(x: blurPadding, y: 0, z: 0))
-      blit.endEncoding()
-    }
+    guard let blit = command.makeBlitCommandEncoder() else { return false }
+    blit.copy(
+      from: smallTexture, sourceSlice: 0, sourceLevel: 0, sourceOrigin: MTLOrigin(),
+      sourceSize: MTLSize(width: smallTexture.width, height: smallTexture.height, depth: 1),
+      to: sideTexture, destinationSlice: 0, destinationLevel: 0,
+      destinationOrigin: MTLOrigin(x: blurPadding, y: 0, z: 0))
+    blit.endEncoding()
     for (kernel, destination) in zip(blurKernels, blurTextures) {
       kernel.encode(
         commandBuffer: command, sourceTexture: sideTexture, destinationTexture: destination)
     }
+    return true
+  }
+
+  private func encodeClear(command: MTLCommandBuffer, texture: MTLTexture) -> Bool {
+    let pass = MTLRenderPassDescriptor()
+    pass.colorAttachments[0].texture = texture
+    pass.colorAttachments[0].loadAction = .clear
+    pass.colorAttachments[0].storeAction = .store
+    pass.colorAttachments[0].clearColor = MTLClearColorMake(0, 0, 0, 1)
+    guard let encoder = command.makeRenderCommandEncoder(descriptor: pass) else { return false }
+    encoder.endEncoding()
+    return true
   }
 
   func draw(in view: MTKView) {
@@ -241,8 +252,7 @@ final class DesktopRenderer: NSObject, MTKViewDelegate {
       inFlight.signal()
       return
     }
-    if blurredGeneration != generation {
-      encodeBlur(command: command, texture: texture)
+    if blurredGeneration != generation, encodeBlur(command: command, texture: texture) {
       blurredGeneration = generation
     }
     let blend = min(progress / 0.025, 1)
