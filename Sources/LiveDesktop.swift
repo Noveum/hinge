@@ -127,9 +127,11 @@ final class LiveDesktop: NSObject, ObservableObject {
 
   func setEffectStrength(_ value: Double) {
     let strength = value.isFinite ? min(max(value, 0.25), 1) : 1
+    guard strength != effectStrength else { return }
     effectStrength = strength
     UserDefaults.standard.set(strength, forKey: "effectStrength")
     renderer?.effectStrength = Float(strength)
+    NSHapticFeedbackManager.defaultPerformer.perform(.levelChange, performanceTime: .now)
   }
 
   func start() async {
