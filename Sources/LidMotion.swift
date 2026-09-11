@@ -130,7 +130,7 @@ final class LidMotion {
   }
 
   private func velocity(at time: Double) -> Double {
-    angularVelocity * exp(-max(time - lastSample - 0.025, 0) / 0.08)
+    angularVelocity * exp(-max(time - lastSample - 0.12, 0) / 0.08)
   }
 
   var isClosing: Bool {
