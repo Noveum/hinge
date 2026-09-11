@@ -6,6 +6,7 @@ struct FoldParameters {
     float opacity;
     float blurInset;
     float blurSpan;
+    float taper;
 };
 
 struct FoldVertex {
@@ -30,7 +31,8 @@ fragment float4 foldFragment(FoldVertex in [[stage_in]],
     texture2d<float> sides [[texture(4)]],
     constant FoldParameters &p [[buffer(0)]]) {
     constexpr sampler sampleMode(coord::normalized, address::clamp_to_edge, filter::linear);
-    float q = (1.0 + 0.30 * p.progress) / (1.0 + 0.30 * p.progress * in.uv.y);
+    float taper = p.taper * p.progress;
+    float q = (1.0 + taper) / (1.0 + taper * in.uv.y);
     float2 uv = float2((in.uv.x - 0.5) * q + 0.5, in.uv.y * q);
     float edge = min(uv.x, 1.0 - uv.x);
     float2 blurUV = float2(p.blurInset + uv.x * p.blurSpan, uv.y);

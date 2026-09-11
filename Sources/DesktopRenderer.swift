@@ -7,6 +7,7 @@ struct FoldParameters {
   var opacity: Float = 1
   var blurInset: Float = 0
   var blurSpan: Float = 1
+  var taper = DesktopRenderer.taper
 }
 
 enum SideFill: String, CaseIterable, Identifiable {
@@ -17,6 +18,7 @@ enum SideFill: String, CaseIterable, Identifiable {
 }
 
 final class DesktopRenderer: NSObject, MTKViewDelegate {
+  static let taper: Float = 0.30
   let device: MTLDevice
   let queue: MTLCommandQueue
   private let pipeline: MTLRenderPipelineState
@@ -140,7 +142,7 @@ final class DesktopRenderer: NSObject, MTKViewDelegate {
     let smallWidth = max(width / 4, 1)
     let smallHeight = max(height / 4, 1)
     if smallTexture?.width == smallWidth, smallTexture?.height == smallHeight { return true }
-    let padding = Int((Double(smallWidth) * 0.16).rounded(.up))
+    let padding = Int((Double(smallWidth) * Double(Self.taper) / 2).rounded(.up)) + 1
     let descriptor = MTLTextureDescriptor.texture2DDescriptor(
       pixelFormat: .bgra8Unorm, width: smallWidth, height: smallHeight, mipmapped: false)
     descriptor.storageMode = .private
