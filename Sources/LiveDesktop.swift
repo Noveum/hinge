@@ -36,6 +36,8 @@ final class LiveDesktop: NSObject, ObservableObject {
   @Published private(set) var openAngle: Double
   @Published private(set) var effectStrength: Double
   @Published private(set) var sideFill: SideFill
+  @Published private(set) var cropsTop: Bool
+  @Published private(set) var blursByDistance: Bool
   @Published private(set) var error: String?
   @Published private(set) var needsPermission = false
   @Published private(set) var isEnabled = UserDefaults.standard.bool(forKey: "effectEnabled")
@@ -70,6 +72,8 @@ final class LiveDesktop: NSObject, ObservableObject {
     self.openAngle = openAngle
     self.effectStrength = effectStrength
     sideFill = UserDefaults.standard.string(forKey: "sideFill").flatMap(SideFill.init) ?? .blur
+    cropsTop = UserDefaults.standard.object(forKey: "cropsTop") as? Bool ?? true
+    blursByDistance = UserDefaults.standard.object(forKey: "blursByDistance") as? Bool ?? true
     motion = LidMotion(openAngle: openAngle)
     super.init()
     let motion = motion
@@ -174,6 +178,18 @@ final class LiveDesktop: NSObject, ObservableObject {
     renderer?.sideFill = fill
   }
 
+  func setCropsTop(_ enabled: Bool) {
+    cropsTop = enabled
+    UserDefaults.standard.set(enabled, forKey: "cropsTop")
+    renderer?.cropsTop = enabled
+  }
+
+  func setBlursByDistance(_ enabled: Bool) {
+    blursByDistance = enabled
+    UserDefaults.standard.set(enabled, forKey: "blursByDistance")
+    renderer?.blursByDistance = enabled
+  }
+
   func start(promptForPermission: Bool = true) async {
     guard !isStarting, !isActive else { return }
     error = nil
@@ -198,6 +214,8 @@ final class LiveDesktop: NSObject, ObservableObject {
       let renderer = try DesktopRenderer(resources: .main, motion: motion)
       renderer.effectStrength = Float(effectStrength)
       renderer.sideFill = sideFill
+      renderer.cropsTop = cropsTop
+      renderer.blursByDistance = blursByDistance
       let content = try await SCShareableContent.excludingDesktopWindows(
         false, onScreenWindowsOnly: false)
       guard self.session == session else { return }
