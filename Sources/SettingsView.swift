@@ -1,7 +1,10 @@
+import ServiceManagement
 import SwiftUI
 
 struct SettingsView: View {
   @ObservedObject var desktop: LiveDesktop
+  @State private var loginItemStatus = SMAppService.mainApp.status
+  @State private var loginItemError: String?
 
   var body: some View {
     VStack(alignment: .leading, spacing: 24) {
@@ -38,6 +41,29 @@ struct SettingsView: View {
         Divider()
         HStack {
           VStack(alignment: .leading, spacing: 4) {
+            Text("Effect strength").fontWeight(.medium)
+            Text("\(Int(desktop.effectStrength * 100))%")
+              .foregroundStyle(.secondary)
+              .monospacedDigit()
+          }
+          Spacer()
+          Slider(
+            value: Binding(
+              get: { desktop.effectStrength },
+              set: { desktop.setEffectStrength($0) }),
+            in: 0.25...1, step: 0.05
+          )
+          .frame(width: 100)
+          .accessibilityLabel("Effect strength")
+          .accessibilityValue("\(Int(desktop.effectStrength * 100)) percent")
+          Button("Default") { desktop.setEffectStrength(1) }
+            .disabled(desktop.effectStrength == 1)
+            .help("Reset effect strength to 100%")
+            .accessibilityLabel("Reset effect strength to default")
+        }
+        Divider()
+        HStack {
+          VStack(alignment: .leading, spacing: 4) {
             Text("Open position").fontWeight(.medium)
             Text("\(Int(desktop.openAngle))°")
               .foregroundStyle(.secondary)
@@ -47,8 +73,23 @@ struct SettingsView: View {
           Button("Set open position") { desktop.setOpenPosition() }
             .disabled(!desktop.sensorAvailable || desktop.isStarting)
         }
+        Divider()
+        Toggle("Launch at login", isOn: launchAtLogin)
+          .toggleStyle(.switch)
+        if loginItemStatus == .requiresApproval {
+          Button("Approval required in Login Items") {
+            SMAppService.openSystemSettingsLoginItems()
+          }
+          .buttonStyle(.link)
+        }
       }
       .font(.system(size: 12))
+      if let loginItemError {
+        Text(loginItemError)
+          .font(.system(size: 12))
+          .foregroundStyle(.orange)
+          .fixedSize(horizontal: false, vertical: true)
+      }
       if let error = desktop.error {
         VStack(alignment: .leading, spacing: 8) {
           Text(error).foregroundStyle(.orange)
@@ -75,5 +116,32 @@ struct SettingsView: View {
     .padding(28)
     .padding(.top, 12)
     .frame(width: 376)
+    .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification))
+    {
+      _ in
+      loginItemStatus = SMAppService.mainApp.status
+    }
+  }
+
+  private var launchAtLogin: Binding<Bool> {
+    Binding(
+      get: {
+        loginItemStatus == .enabled || loginItemStatus == .requiresApproval
+      },
+      set: setLaunchAtLogin)
+  }
+
+  private func setLaunchAtLogin(_ enabled: Bool) {
+    do {
+      if enabled {
+        try SMAppService.mainApp.register()
+      } else {
+        try SMAppService.mainApp.unregister()
+      }
+      loginItemError = nil
+    } catch {
+      loginItemError = "Could not update Launch at Login: \(error.localizedDescription)"
+    }
+    loginItemStatus = SMAppService.mainApp.status
   }
 }
