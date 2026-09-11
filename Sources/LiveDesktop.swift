@@ -35,9 +35,16 @@ final class LiveDesktop: NSObject, ObservableObject {
   @Published private(set) var sensorAvailable = false
   @Published private(set) var openAngle: Double
   @Published private(set) var effectStrength: Double
+  @Published private(set) var sideFill: SideFill
   @Published private(set) var error: String?
   @Published private(set) var needsPermission = false
+  @Published private(set) var isEnabled = UserDefaults.standard.bool(forKey: "effectEnabled")
+  private static let missingSensorMessage =
+    "This Mac doesn't appear to have a lid angle sensor, so Hinge can't follow the lid."
+  private static let sensorDroppedMessage =
+    "The lid sensor stopped responding. Hinge turns back on as soon as it reconnects."
   private let sensor = LidSensor()
+  private var sensorMissing = false
   private let motion: LidMotion
   private var stream: SCStream?
   private var frames: ScreenFrames?
@@ -48,6 +55,7 @@ final class LiveDesktop: NSObject, ObservableObject {
   private var session = UUID()
   private var observers = [NSObjectProtocol]()
   private var resumeAfterWake = false
+  private var restoringAtLaunch = UserDefaults.standard.bool(forKey: "effectEnabled")
   private var wakeTask: Task<Void, Never>?
   private var displayTask: Task<Void, Never>?
   private var capturedDisplayID: CGDirectDisplayID?
@@ -61,6 +69,7 @@ final class LiveDesktop: NSObject, ObservableObject {
       savedStrength.isFinite && (0.25...1).contains(savedStrength) ? savedStrength : 1
     self.openAngle = openAngle
     self.effectStrength = effectStrength
+    sideFill = UserDefaults.standard.string(forKey: "sideFill").flatMap(SideFill.init) ?? .blur
     motion = LidMotion(openAngle: openAngle)
     super.init()
     let motion = motion
@@ -71,12 +80,30 @@ final class LiveDesktop: NSObject, ObservableObject {
         guard let self else { return }
         if update.availabilityChanged {
           self.sensorAvailable = update.available
+          if update.available, self.sensorMissing {
+            self.sensorMissing = false
+            if self.error == Self.missingSensorMessage { self.error = nil }
+          }
           if !update.available, self.isActive || self.isStarting {
             self.stop()
-            self.error = "The lid sensor stopped responding. Turn Hinge on again to reconnect."
+            self.error = Self.sensorDroppedMessage
           }
         }
         if update.beganClosing { self.beginRendering() }
+        if update.available, self.isEnabled, !self.isActive, !self.isStarting,
+          !self.resumeAfterWake
+        {
+          let restoring = self.restoringAtLaunch
+          self.restoringAtLaunch = false
+          await self.start(promptForPermission: !restoring)
+        }
+      }
+    }
+    sensor.onMissing = { [weak self] in
+      Task { @MainActor [weak self] in
+        guard let self, !self.sensorAvailable else { return }
+        self.sensorMissing = true
+        if self.error == nil { self.error = Self.missingSensorMessage }
       }
     }
     sensor.start()
@@ -113,6 +140,13 @@ final class LiveDesktop: NSObject, ObservableObject {
       })
   }
 
+  func setEnabled(_ enabled: Bool) {
+    isEnabled = enabled
+    restoringAtLaunch = false
+    UserDefaults.standard.set(enabled, forKey: "effectEnabled")
+    if enabled { Task { await start() } } else { stop() }
+  }
+
   func setOpenPosition() {
     guard let angle = motion.calibrate() else {
       error = "Open the lid to your comfortable viewing position first."
@@ -134,16 +168,24 @@ final class LiveDesktop: NSObject, ObservableObject {
     NSHapticFeedbackManager.defaultPerformer.perform(.levelChange, performanceTime: .now)
   }
 
-  func start() async {
+  func setSideFill(_ fill: SideFill) {
+    sideFill = fill
+    UserDefaults.standard.set(fill.rawValue, forKey: "sideFill")
+    renderer?.sideFill = fill
+  }
+
+  func start(promptForPermission: Bool = true) async {
     guard !isStarting, !isActive else { return }
     error = nil
     needsPermission = false
     guard sensorAvailable else {
       sensor.reconnect()
-      error = "The lid sensor is unavailable. Reconnecting, try turning Hinge on again in a moment."
+      if sensorMissing { error = Self.missingSensorMessage }
       return
     }
-    guard CGPreflightScreenCaptureAccess() || CGRequestScreenCaptureAccess() else {
+    let hasScreenAccess =
+      CGPreflightScreenCaptureAccess() || (promptForPermission && CGRequestScreenCaptureAccess())
+    guard hasScreenAccess else {
       needsPermission = true
       error = "Allow Hinge in Screen Recording settings, then quit and reopen it."
       return
@@ -155,6 +197,7 @@ final class LiveDesktop: NSObject, ObservableObject {
     do {
       let renderer = try DesktopRenderer(resources: .main, motion: motion)
       renderer.effectStrength = Float(effectStrength)
+      renderer.sideFill = sideFill
       let content = try await SCShareableContent.excludingDesktopWindows(
         false, onScreenWindowsOnly: false)
       guard self.session == session else { return }
@@ -231,10 +274,7 @@ final class LiveDesktop: NSObject, ObservableObject {
         try await Task.sleep(for: .milliseconds(10))
       }
       guard self.session == session else { return }
-      guard sensorAvailable else {
-        throw DesktopError.message(
-          "The lid sensor is unavailable. Turn Hinge on again to reconnect.")
-      }
+      guard sensorAvailable else { throw DesktopError.message(Self.sensorDroppedMessage) }
       motion.setEnabled(true)
       isActive = true
       isStarting = false

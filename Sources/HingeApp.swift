@@ -6,18 +6,15 @@ import SwiftUI
 struct HingeApp: App {
   @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
   @StateObject private var desktop = LiveDesktop()
+  @StateObject private var navigator = Navigator()
 
   var body: some Scene {
-    Window("Hinge", id: "settings") {
-      SettingsView(desktop: desktop)
+    Window("Hinge", id: "main") {
+      MainView(desktop: desktop, navigator: navigator)
         .onAppear {
           delegate.onTerminate = { desktop.shutDown() }
           delegate.installToggleHotKey {
-            if desktop.isActive {
-              desktop.stop()
-            } else if !desktop.isStarting {
-              Task { await desktop.start() }
-            }
+            if !desktop.isStarting { desktop.setEnabled(!desktop.isEnabled) }
           }
         }
     }
@@ -34,7 +31,7 @@ struct HingeApp: App {
     MenuBarExtra(
       "Hinge", systemImage: desktop.isActive ? "laptopcomputer.and.arrow.down" : "laptopcomputer"
     ) {
-      HingeMenu(desktop: desktop)
+      HingeMenu(desktop: desktop, navigator: navigator)
     }
   }
 }
@@ -99,14 +96,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
 struct HingeMenu: View {
   @ObservedObject var desktop: LiveDesktop
+  @ObservedObject var navigator: Navigator
   @Environment(\.openWindow) private var openWindow
 
   var body: some View {
     Button {
-      if desktop.isActive { desktop.stop() } else { Task { await desktop.start() } }
+      desktop.setEnabled(!desktop.isEnabled)
     } label: {
       HStack {
-        Text(desktop.isActive ? "Turn off" : "Turn on")
+        Text(desktop.isEnabled ? "Turn off" : "Turn on")
         Spacer()
         Text("⌃⌥H").foregroundStyle(.secondary)
       }
@@ -115,8 +113,14 @@ struct HingeMenu: View {
     Button("Set open position") { desktop.setOpenPosition() }
       .disabled(!desktop.sensorAvailable || desktop.isStarting)
     Divider()
+    Button("Open Hinge") {
+      navigator.screen = .main
+      openWindow(id: "main")
+      NSApp.activate(ignoringOtherApps: true)
+    }
     Button("Settings…") {
-      openWindow(id: "settings")
+      navigator.screen = .settings
+      openWindow(id: "main")
       NSApp.activate(ignoringOtherApps: true)
     }.keyboardShortcut(",")
     Button("Quit Hinge") { NSApp.terminate(nil) }.keyboardShortcut("q")
