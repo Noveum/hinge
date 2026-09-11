@@ -10,7 +10,7 @@ ScreenCaptureKit supplies your live desktop, and Metal adds perspective and prog
 
 ## Install
 
-Requires an Apple silicon MacBook with a supported lid sensor and macOS 14 or later.
+Requires an Apple silicon MacBook with a supported lid sensor and macOS 14 or later. Not every MacBook has one; Hinge tells you if yours doesn't.
 
 [Download Hinge](https://hinge.noveum.ai/download), open the DMG, and drag Hinge into Applications. This prototype is not notarized; macOS may ask you to approve it under Privacy & Security.
 
@@ -23,7 +23,7 @@ make build
 open build/Hinge.app
 ```
 
-Allow Screen Recording, reopen Hinge if prompted, and turn it on. By default Hinge treats whatever angle you settle at as your open position, so wherever you park the lid stays clear and only closing from there folds. Prefer one fixed angle? Turn off **Follow my open angle**, get comfy, and click **Set open position**. Hinge remembers.
+Allow Screen Recording, reopen Hinge if prompted, and turn it on. It turns itself back on the next time you open it. By default Hinge treats whatever angle you settle at as your open position, so wherever you park the lid stays clear and only closing from there folds. Prefer one fixed angle? Turn off **Follow my open angle**, get comfy, and click **Set open position**. Hinge remembers.
 
 ## Got an idea?
 

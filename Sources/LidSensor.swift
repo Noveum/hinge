@@ -5,7 +5,9 @@ final class LidSensor {
   private let queue = DispatchQueue(label: "hinge.sensor", qos: .userInteractive)
   private var connection: LidConnection?
   private var tracking = false
+  private var hasConnected = false
   var onAngle: ((Double?) -> Void)?
+  var onMissing: (() -> Void)?
 
   func start() {
     queue.async { [weak self] in self?.connect() }
@@ -35,10 +37,15 @@ final class LidSensor {
       kIOHIDDeviceUsageKey: 0x008A,
     ]
     IOHIDManagerSetDeviceMatching(manager, matching as CFDictionary)
-    guard IOHIDManagerOpen(manager, 0) == kIOReturnSuccess,
-      let devices = IOHIDManagerCopyDevices(manager) as? Set<IOHIDDevice>
+    guard IOHIDManagerOpen(manager, 0) == kIOReturnSuccess else {
+      IOHIDManagerClose(manager, 0)
+      onAngle?(nil)
+      return
+    }
+    guard let devices = IOHIDManagerCopyDevices(manager) as? Set<IOHIDDevice>, !devices.isEmpty
     else {
       IOHIDManagerClose(manager, 0)
+      if !hasConnected { onMissing?() }
       onAngle?(nil)
       return
     }
@@ -53,6 +60,7 @@ final class LidSensor {
         self?.onAngle?(value)
       }
       self.connection = connection
+      hasConnected = true
       onAngle?(angle)
       connection.setTracking(tracking)
       return
