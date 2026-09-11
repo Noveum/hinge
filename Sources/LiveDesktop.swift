@@ -141,7 +141,7 @@ final class LiveDesktop: NSObject, ObservableObject {
     do {
       let renderer = try DesktopRenderer(resources: .main, motion: motion)
       let content = try await SCShareableContent.excludingDesktopWindows(
-        false, onScreenWindowsOnly: true)
+        false, onScreenWindowsOnly: false)
       guard self.session == session else { return }
       guard let display = content.displays.first(where: { CGDisplayIsBuiltin($0.displayID) != 0 }),
         let screen = NSScreen.screens.first(where: {
@@ -244,7 +244,7 @@ final class LiveDesktop: NSObject, ObservableObject {
     let currentSession = session
     do {
       let content = try await SCShareableContent.excludingDesktopWindows(
-        false, onScreenWindowsOnly: true)
+        false, onScreenWindowsOnly: false)
       guard session == currentSession,
         let display = content.displays.first(where: { $0.displayID == capturedDisplayID })
       else { return }
