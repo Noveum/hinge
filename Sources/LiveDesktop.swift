@@ -299,10 +299,13 @@ final class LiveDesktop: NSObject, ObservableObject {
       let applications = content.applications.filter {
         $0.processID == ProcessInfo.processInfo.processIdentifier
       }
-      try await stream.updateContentFilter(
-        SCContentFilter(
-          display: display, excludingApplications: applications, exceptingWindows: windows))
-      if session == currentSession { includedWindowIDs = windowIDs }
+      let filter = SCContentFilter(
+        display: display, excludingApplications: applications, exceptingWindows: windows)
+      try await stream.updateContentFilter(filter)
+      if session == currentSession {
+        includedWindowIDs = windowIDs
+        captureFilter = filter
+      }
     } catch {
       guard session == currentSession else { return }
       stop()
@@ -409,6 +412,8 @@ final class LiveDesktop: NSObject, ObservableObject {
         !self.motion.isClosing
       else { return }
       self.idleTask = nil
+      await self.refreshIncludedWindows()
+      guard self.session == idleSession, self.isActive, !self.motion.isClosing else { return }
       self.suspendCapture()
     }
   }
@@ -423,6 +428,17 @@ final class LiveDesktop: NSObject, ObservableObject {
       try? await stream.stopCapture()
       if let output { try? stream.removeStreamOutput(output, type: .screen) }
     }
+  }
+
+  private nonisolated static func startStream(
+    filter: SCContentFilter, configuration: SCStreamConfiguration, output: ScreenFrames
+  ) async throws -> SCStream {
+    let stream = SCStream(filter: filter, configuration: configuration, delegate: output)
+    try stream.addStreamOutput(
+      output, type: .screen,
+      sampleHandlerQueue: DispatchQueue(label: "hinge.capture", qos: .userInteractive))
+    try await stream.startCapture()
+    return stream
   }
 
   private func resumeCapture() {
@@ -442,11 +458,8 @@ final class LiveDesktop: NSObject, ObservableObject {
             self.error = failure.localizedDescription
           }
         }
-        let stream = SCStream(filter: filter, configuration: configuration, delegate: output)
-        try stream.addStreamOutput(
-          output, type: .screen,
-          sampleHandlerQueue: DispatchQueue(label: "hinge.capture", qos: .userInteractive))
-        try await stream.startCapture()
+        let stream = try await Self.startStream(
+          filter: filter, configuration: configuration, output: output)
         self.resumeTask = nil
         guard self.session == resumeSession, self.isActive, self.captureSuspended else {
           try? await stream.stopCapture()
@@ -455,7 +468,6 @@ final class LiveDesktop: NSObject, ObservableObject {
         self.frames = output
         self.stream = stream
         self.captureSuspended = false
-        await self.refreshIncludedWindows()
       } catch {
         self.resumeTask = nil
         guard self.session == resumeSession, self.isActive else { return }
