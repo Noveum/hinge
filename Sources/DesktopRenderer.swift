@@ -38,6 +38,7 @@ final class DesktopRenderer: NSObject, MTKViewDelegate {
   private var blurredGeneration: UInt64?
   private let motion: LidMotion
   private var wasPresented = false
+  private var entryStart: CFTimeInterval?
   var effectStrength: Float = 1
   var sideFill = SideFill.blur {
     didSet { if sideFill != oldValue { blurredGeneration = nil } }
@@ -69,6 +70,12 @@ final class DesktopRenderer: NSObject, MTKViewDelegate {
     pipeline = try device.makeRenderPipelineState(descriptor: descriptor)
     super.init()
     CVMetalTextureCacheCreate(kCFAllocatorDefault, nil, device, nil, &textureCache)
+  }
+
+  func beginEntry(at time: CFTimeInterval = CACurrentMediaTime()) {
+    lock.lock()
+    entryStart = time
+    lock.unlock()
   }
 
   var hasFrame: Bool {
@@ -256,7 +263,14 @@ final class DesktopRenderer: NSObject, MTKViewDelegate {
       blurredGeneration = generation
     }
     let blend = min(progress / 0.025, 1)
-    let opacity = blend * blend * (3 - 2 * blend)
+    var opacity = blend * blend * (3 - 2 * blend)
+    lock.lock()
+    if let entryStart {
+      let elapsed = Float(min(max((time - entryStart) / 0.16, 0), 1))
+      opacity = min(opacity, elapsed * elapsed * (3 - 2 * elapsed))
+      if elapsed >= 1 { self.entryStart = nil }
+    }
+    lock.unlock()
     pass.colorAttachments[0].clearColor = MTLClearColorMake(0, 0, 0, Double(opacity))
     guard
       encodeFold(

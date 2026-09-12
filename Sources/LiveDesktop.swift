@@ -35,6 +35,7 @@ final class LiveDesktop: NSObject, ObservableObject {
   @Published private(set) var sensorAvailable = false
   @Published private(set) var openAngle: Double
   @Published private(set) var effectStrength: Double
+  @Published private(set) var pauseCaptureAtRest: Bool
   @Published private(set) var sideFill: SideFill
   @Published private(set) var error: String?
   @Published private(set) var needsPermission = false
@@ -60,6 +61,11 @@ final class LiveDesktop: NSObject, ObservableObject {
   private var displayTask: Task<Void, Never>?
   private var capturedDisplayID: CGDirectDisplayID?
   private var includedWindowIDs = Set<CGWindowID>()
+  private var captureFilter: SCContentFilter?
+  private var captureConfiguration: SCStreamConfiguration?
+  private var captureSuspended = false
+  private var idleTask: Task<Void, Never>?
+  private var resumeTask: Task<Void, Never>?
 
   override init() {
     let savedAngle = UserDefaults.standard.object(forKey: "openAngle") as? Double ?? 100
@@ -67,8 +73,11 @@ final class LiveDesktop: NSObject, ObservableObject {
     let savedStrength = UserDefaults.standard.object(forKey: "effectStrength") as? Double ?? 1
     let effectStrength =
       savedStrength.isFinite && (0.25...1).contains(savedStrength) ? savedStrength : 1
+    let pauseCaptureAtRest =
+      UserDefaults.standard.object(forKey: "pauseCaptureAtRest") as? Bool ?? true
     self.openAngle = openAngle
     self.effectStrength = effectStrength
+    self.pauseCaptureAtRest = pauseCaptureAtRest
     sideFill = UserDefaults.standard.string(forKey: "sideFill").flatMap(SideFill.init) ?? .blur
     motion = LidMotion(openAngle: openAngle)
     super.init()
@@ -168,6 +177,20 @@ final class LiveDesktop: NSObject, ObservableObject {
     NSHapticFeedbackManager.defaultPerformer.perform(.levelChange, performanceTime: .now)
   }
 
+  func setPauseCaptureAtRest(_ value: Bool) {
+    guard value != pauseCaptureAtRest else { return }
+    pauseCaptureAtRest = value
+    UserDefaults.standard.set(value, forKey: "pauseCaptureAtRest")
+    guard isActive else { return }
+    if value {
+      scheduleIdleSuspend()
+    } else {
+      idleTask?.cancel()
+      idleTask = nil
+      resumeCapture()
+    }
+  }
+
   func setSideFill(_ fill: SideFill) {
     sideFill = fill
     UserDefaults.standard.set(fill.rawValue, forKey: "sideFill")
@@ -216,6 +239,7 @@ final class LiveDesktop: NSObject, ObservableObject {
       let filter = SCContentFilter(
         display: display, excludingApplications: ownApplications, exceptingWindows: ownWindows)
       capturedDisplayID = display.displayID
+      captureFilter = filter
       includedWindowIDs = Set(ownWindows.map(\.windowID))
       let area = screen.frame
       let configuration = SCStreamConfiguration()
@@ -231,6 +255,7 @@ final class LiveDesktop: NSObject, ObservableObject {
       configuration.showsCursor = false
       configuration.capturesAudio = false
       configuration.colorSpaceName = CGColorSpace.sRGB
+      captureConfiguration = configuration
       try await renderer.warmUp(width: configuration.width, height: configuration.height)
       guard self.session == session else { return }
       let frames = ScreenFrames()
@@ -278,7 +303,12 @@ final class LiveDesktop: NSObject, ObservableObject {
       motion.setEnabled(true)
       isActive = true
       isStarting = false
-      if motion.isClosing { beginRendering() }
+      if motion.isClosing {
+        renderer.beginEntry()
+        beginRendering()
+      } else {
+        scheduleIdleSuspend()
+      }
     } catch {
       guard self.session == session else { return }
       stop()
@@ -309,10 +339,13 @@ final class LiveDesktop: NSObject, ObservableObject {
       let applications = content.applications.filter {
         $0.processID == ProcessInfo.processInfo.processIdentifier
       }
-      try await stream.updateContentFilter(
-        SCContentFilter(
-          display: display, excludingApplications: applications, exceptingWindows: windows))
-      if session == currentSession { includedWindowIDs = windowIDs }
+      let filter = SCContentFilter(
+        display: display, excludingApplications: applications, exceptingWindows: windows)
+      try await stream.updateContentFilter(filter)
+      if session == currentSession {
+        includedWindowIDs = windowIDs
+        captureFilter = filter
+      }
     } catch {
       guard session == currentSession else { return }
       stop()
@@ -391,6 +424,9 @@ final class LiveDesktop: NSObject, ObservableObject {
 
   private func beginRendering() {
     guard isActive, motion.isClosing else { return }
+    idleTask?.cancel()
+    idleTask = nil
+    resumeCapture()
     displayLink?.isPaused = false
   }
 
@@ -403,6 +439,86 @@ final class LiveDesktop: NSObject, ObservableObject {
   private func restOverlay() {
     guard !motion.isClosing else { return }
     displayLink?.isPaused = true
+    scheduleIdleSuspend()
+  }
+
+  private func scheduleIdleSuspend() {
+    guard pauseCaptureAtRest, isActive, !captureSuspended, idleTask == nil, stream != nil
+    else { return }
+    let idleSession = session
+    idleTask = Task { [weak self] in
+      do { try await Task.sleep(for: .seconds(3)) } catch { return }
+      guard let self, !Task.isCancelled, self.session == idleSession, self.isActive,
+        !self.motion.isClosing
+      else { return }
+      self.idleTask = nil
+      await self.refreshIncludedWindows()
+      guard self.session == idleSession, self.isActive, !self.motion.isClosing else { return }
+      self.suspendCapture()
+    }
+  }
+
+  private func suspendCapture() {
+    guard isActive, !captureSuspended, let stream else { return }
+    captureSuspended = true
+    let output = frames
+    output?.renderer = nil
+    output?.onFailure = nil
+    self.stream = nil
+    frames = nil
+    Task {
+      try? await stream.stopCapture()
+      if let output { try? stream.removeStreamOutput(output, type: .screen) }
+    }
+  }
+
+  private nonisolated static func startStream(
+    filter: SCContentFilter, configuration: SCStreamConfiguration, output: ScreenFrames
+  ) async throws -> SCStream {
+    let stream = SCStream(filter: filter, configuration: configuration, delegate: output)
+    try stream.addStreamOutput(
+      output, type: .screen,
+      sampleHandlerQueue: DispatchQueue(label: "hinge.capture", qos: .userInteractive))
+    try await stream.startCapture()
+    return stream
+  }
+
+  private func resumeCapture() {
+    guard isActive, captureSuspended, resumeTask == nil, let renderer,
+      let filter = captureFilter, let configuration = captureConfiguration
+    else { return }
+    let resumeSession = session
+    resumeTask = Task { [weak self] in
+      guard let self else { return }
+      do {
+        let output = ScreenFrames()
+        output.renderer = renderer
+        output.onFailure = { [weak self] failure in
+          Task { @MainActor in
+            guard let self, self.session == resumeSession else { return }
+            self.stop()
+            self.error = failure.localizedDescription
+          }
+        }
+        let stream = try await Self.startStream(
+          filter: filter, configuration: configuration, output: output)
+        self.resumeTask = nil
+        guard self.session == resumeSession, self.isActive, self.captureSuspended else {
+          output.renderer = nil
+          output.onFailure = nil
+          try? await stream.stopCapture()
+          return
+        }
+        self.frames = output
+        self.stream = stream
+        self.captureSuspended = false
+      } catch {
+        self.resumeTask = nil
+        guard self.session == resumeSession, self.isActive else { return }
+        self.stop()
+        self.error = "Could not resume desktop capture: \(error.localizedDescription)"
+      }
+    }
   }
 
   private func refreshDisplay() {
@@ -449,6 +565,13 @@ final class LiveDesktop: NSObject, ObservableObject {
       wakeTask = nil
     }
     session = UUID()
+    idleTask?.cancel()
+    idleTask = nil
+    resumeTask?.cancel()
+    resumeTask = nil
+    captureSuspended = false
+    captureFilter = nil
+    captureConfiguration = nil
     sensor.setTracking(false)
     motion.setEnabled(false)
     displayLink?.invalidate()

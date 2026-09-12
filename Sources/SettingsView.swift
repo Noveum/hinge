@@ -78,6 +78,21 @@ struct SettingsView: View {
           .labelsHidden()
       }
       SettingsDivider()
+      SettingsRow(
+        "pause.circle.fill", tint: .purple, title: "Pause capture at rest",
+        subtitle: "Only capture while the lid folds"
+      ) {
+        Toggle(
+          "Pause capture at rest",
+          isOn: Binding(
+            get: { desktop.pauseCaptureAtRest }, set: { desktop.setPauseCaptureAtRest($0) })
+        )
+        .toggleStyle(.switch)
+        .controlSize(.small)
+        .labelsHidden()
+        .help("Capture only while the lid folds, so the recording indicator stays off at rest.")
+      }
+      SettingsDivider()
       SettingsRow("keyboard", tint: .gray, title: "Turn Hinge on or off") {
         Text("⌃⌥H")
           .font(.system(size: 12, weight: .medium))
