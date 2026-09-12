@@ -222,7 +222,7 @@ final class LiveDesktop: NSObject, ObservableObject {
       configuration.sourceRect = CGRect(
         x: area.minX - screen.frame.minX, y: screen.frame.maxY - area.maxY, width: area.width,
         height: area.height)
-      let scale = min(screen.backingScaleFactor, 2400 / area.width)
+      let scale = min(screen.backingScaleFactor, 2800 / area.width, 1.6)
       configuration.width = Int(area.width * scale) / 2 * 2
       configuration.height = Int(area.height * scale) / 2 * 2
       configuration.minimumFrameInterval = CMTime(value: 1, timescale: 60)
