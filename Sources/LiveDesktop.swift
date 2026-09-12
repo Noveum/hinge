@@ -462,6 +462,8 @@ final class LiveDesktop: NSObject, ObservableObject {
     guard isActive, !captureSuspended, let stream else { return }
     captureSuspended = true
     let output = frames
+    output?.renderer = nil
+    output?.onFailure = nil
     self.stream = nil
     frames = nil
     Task {
@@ -502,6 +504,8 @@ final class LiveDesktop: NSObject, ObservableObject {
           filter: filter, configuration: configuration, output: output)
         self.resumeTask = nil
         guard self.session == resumeSession, self.isActive, self.captureSuspended else {
+          output.renderer = nil
+          output.onFailure = nil
           try? await stream.stopCapture()
           return
         }
