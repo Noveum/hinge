@@ -6,6 +6,9 @@
 "Back" = "Quay lại";
 "Beside the folded desktop" = "Hai bên màn hình nền đã gập";
 "Black" = "Đen";
+"Blur builds toward the top and fades out near the hinge." = "Độ mờ tăng dần về phía trên và giảm gần bản lề.";
+"Blur by distance" = "Làm mờ theo khoảng cách";
+"Blur grows with distance from the open screen, so the hinge edge stays sharp." = "Độ mờ tăng theo khoảng cách từ màn hình đang mở, nên mép gần bản lề vẫn rõ nét.";
 "Blur" = "Mờ";
 "Connected" = "Đã kết nối";
 "Controls" = "Điều khiển";
@@ -16,6 +19,7 @@
 "Could not prepare the fold pipeline." = "Không thể chuẩn bị quy trình hiển thị nếp gập.";
 "Could not update Launch at Login: %@" = "Không thể cập nhật “Mở khi đăng nhập”: %@";
 "Could not update the captured windows: %@" = "Không thể cập nhật các cửa sổ được ghi: %@";
+"Crop from the top" = "Cắt từ phía trên";
 "Effect strength" = "Cường độ hiệu ứng";
 "Getting the desktop and the sensor ready." = "Đang chuẩn bị màn hình nền và cảm biến.";
 "Hinge could not register ⌃⌥H (error %d)." = "Hinge không thể đăng ký ⌃⌥H (lỗi %d).";
@@ -57,6 +61,7 @@
 "The desktop renderer is missing. Rebuild the app." = "Thiếu bộ hiển thị màn hình nền. Hãy dựng lại ứng dụng.";
 "The desktop renderer stopped: %@" = "Quá trình hiển thị màn hình nền đã dừng: %@";
 "The lid sensor stopped responding. Hinge turns back on as soon as it reconnects." = "Cảm biến nắp đã ngừng phản hồi. Hinge sẽ tự bật lại ngay khi kết nối lại.";
+"The top of the desktop slides out of view as the lid closes." = "Phần trên của màn hình nền trượt khỏi tầm nhìn khi đóng nắp.";
 "This Mac doesn't appear to have a lid angle sensor, so Hinge can't follow the lid." = "Máy Mac này có vẻ không có cảm biến góc nắp, nên Hinge không thể theo nắp máy.";
 "Turn Hinge on or off" = "Bật hoặc tắt Hinge";
 "Turn Hinge on to follow the lid." = "Bật Hinge để theo nắp máy.";

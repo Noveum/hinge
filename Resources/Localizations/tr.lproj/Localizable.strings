@@ -6,6 +6,9 @@
 "Back" = "Geri";
 "Beside the folded desktop" = "Katlanmış masaüstünün yanları";
 "Black" = "Siyah";
+"Blur builds toward the top and fades out near the hinge." = "Bulanıklık yukarıya doğru artar ve menteşe yakınında azalır.";
+"Blur by distance" = "Mesafeye göre bulanıklık";
+"Blur grows with distance from the open screen, so the hinge edge stays sharp." = "Açık ekrandan uzaklaştıkça bulanıklık artar, böylece menteşe kenarı net kalır.";
 "Blur" = "Bulanık";
 "Connected" = "Bağlı";
 "Controls" = "Denetimler";
@@ -16,6 +19,7 @@
 "Could not prepare the fold pipeline." = "Katlama işlem hattı hazırlanamadı.";
 "Could not update Launch at Login: %@" = "“Oturum açıldığında aç” güncellenemedi: %@";
 "Could not update the captured windows: %@" = "Kaydedilen pencereler güncellenemedi: %@";
+"Crop from the top" = "Üstten kırp";
 "Effect strength" = "Efekt gücü";
 "Getting the desktop and the sensor ready." = "Masaüstü ve sensör hazırlanıyor.";
 "Hinge could not register ⌃⌥H (error %d)." = "Hinge ⌃⌥H kestirmesini kaydedemedi (hata %d).";
@@ -57,6 +61,7 @@
 "The desktop renderer is missing. Rebuild the app." = "Masaüstü görüntüleyici eksik. Uygulamayı yeniden derleyin.";
 "The desktop renderer stopped: %@" = "Masaüstü görüntüleme durdu: %@";
 "The lid sensor stopped responding. Hinge turns back on as soon as it reconnects." = "Kapak sensörü yanıt vermiyor. Hinge, sensör yeniden bağlanır bağlanmaz tekrar açılır.";
+"The top of the desktop slides out of view as the lid closes." = "Kapak kapandıkça masaüstünün üst kısmı görüş alanından çıkar.";
 "This Mac doesn't appear to have a lid angle sensor, so Hinge can't follow the lid." = "Bu Mac’te kapak açısı sensörü yok gibi görünüyor, bu yüzden Hinge kapağı takip edemiyor.";
 "Turn Hinge on or off" = "Hinge’i aç veya kapat";
 "Turn Hinge on to follow the lid." = "Kapağı takip etmesi için Hinge’i açın.";

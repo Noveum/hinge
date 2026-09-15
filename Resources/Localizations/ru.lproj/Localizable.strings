@@ -6,6 +6,9 @@
 "Back" = "Назад";
 "Beside the folded desktop" = "По бокам сложенного рабочего стола";
 "Black" = "Чёрный";
+"Blur builds toward the top and fades out near the hinge." = "Размытие усиливается кверху и исчезает рядом с шарниром.";
+"Blur by distance" = "Размытие по расстоянию";
+"Blur grows with distance from the open screen, so the hinge edge stays sharp." = "Размытие усиливается с расстоянием от открытого экрана, поэтому край у шарнира остаётся чётким.";
 "Blur" = "Размытие";
 "Connected" = "Подключён";
 "Controls" = "Управление";
@@ -16,6 +19,7 @@
 "Could not prepare the fold pipeline." = "Не удалось подготовить конвейер отрисовки сгиба.";
 "Could not update Launch at Login: %@" = "Не удалось обновить «Открывать при входе»: %@";
 "Could not update the captured windows: %@" = "Не удалось обновить захватываемые окна: %@";
+"Crop from the top" = "Обрезать сверху";
 "Effect strength" = "Сила эффекта";
 "Getting the desktop and the sensor ready." = "Подготовка рабочего стола и датчика.";
 "Hinge could not register ⌃⌥H (error %d)." = "Hinge не удалось зарегистрировать ⌃⌥H (ошибка %d).";
@@ -57,6 +61,7 @@
 "The desktop renderer is missing. Rebuild the app." = "Модуль отрисовки рабочего стола отсутствует. Пересоберите приложение.";
 "The desktop renderer stopped: %@" = "Отрисовка рабочего стола остановилась: %@";
 "The lid sensor stopped responding. Hinge turns back on as soon as it reconnects." = "Датчик крышки перестал отвечать. Hinge снова включится, как только он переподключится.";
+"The top of the desktop slides out of view as the lid closes." = "При закрытии крышки верхняя часть рабочего стола уходит из поля зрения.";
 "This Mac doesn't appear to have a lid angle sensor, so Hinge can't follow the lid." = "Похоже, на этом Mac нет датчика угла крышки, поэтому Hinge не может следовать за ней.";
 "Turn Hinge on or off" = "Включить или выключить Hinge";
 "Turn Hinge on to follow the lid." = "Включите Hinge, чтобы он следовал за крышкой.";

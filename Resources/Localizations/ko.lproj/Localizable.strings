@@ -6,6 +6,9 @@
 "Back" = "뒤로";
 "Beside the folded desktop" = "접힌 데스크탑의 양옆";
 "Black" = "검은색";
+"Blur builds toward the top and fades out near the hinge." = "위쪽으로 갈수록 흐림이 강해지고 힌지 근처에서는 약해집니다.";
+"Blur by distance" = "거리에 따른 흐림";
+"Blur grows with distance from the open screen, so the hinge edge stays sharp." = "열린 화면에서 멀어질수록 흐림이 강해져 힌지 쪽 가장자리는 선명하게 유지됩니다.";
 "Blur" = "흐림";
 "Connected" = "연결됨";
 "Controls" = "제어";
@@ -16,6 +19,7 @@
 "Could not prepare the fold pipeline." = "접힘 렌더링 파이프라인을 준비할 수 없습니다.";
 "Could not update Launch at Login: %@" = "'로그인 시 열기'를 업데이트할 수 없습니다: %@";
 "Could not update the captured windows: %@" = "기록할 윈도우를 업데이트할 수 없습니다: %@";
+"Crop from the top" = "위쪽부터 자르기";
 "Effect strength" = "효과 강도";
 "Getting the desktop and the sensor ready." = "데스크탑과 센서를 준비하는 중입니다.";
 "Hinge could not register ⌃⌥H (error %d)." = "Hinge가 ⌃⌥H를 등록할 수 없습니다(오류 %d).";
@@ -57,6 +61,7 @@
 "The desktop renderer is missing. Rebuild the app." = "데스크탑 렌더러가 없습니다. 앱을 다시 빌드하십시오.";
 "The desktop renderer stopped: %@" = "데스크탑 렌더러가 멈췄습니다: %@";
 "The lid sensor stopped responding. Hinge turns back on as soon as it reconnects." = "덮개 각도 센서가 응답하지 않습니다. 다시 연결되면 Hinge가 자동으로 다시 켜집니다.";
+"The top of the desktop slides out of view as the lid closes." = "덮개를 닫으면 데스크탑 위쪽이 화면 밖으로 밀려납니다.";
 "This Mac doesn't appear to have a lid angle sensor, so Hinge can't follow the lid." = "이 Mac에는 덮개 각도 센서가 없는 것 같습니다. 따라서 Hinge가 덮개를 따라갈 수 없습니다.";
 "Turn Hinge on or off" = "Hinge 켜기 또는 끄기";
 "Turn Hinge on to follow the lid." = "덮개를 따라가려면 Hinge를 켜십시오.";

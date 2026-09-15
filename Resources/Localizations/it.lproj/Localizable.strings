@@ -6,6 +6,9 @@
 "Back" = "Indietro";
 "Beside the folded desktop" = "Ai lati della scrivania piegata";
 "Black" = "Nero";
+"Blur builds toward the top and fades out near the hinge." = "La sfocatura aumenta verso l’alto e si attenua vicino alla cerniera.";
+"Blur by distance" = "Sfocatura per distanza";
+"Blur grows with distance from the open screen, so the hinge edge stays sharp." = "La sfocatura aumenta con la distanza dallo schermo aperto, mantenendo nitido il bordo della cerniera.";
 "Blur" = "Sfocatura";
 "Connected" = "Collegato";
 "Controls" = "Controlli";
@@ -16,6 +19,7 @@
 "Could not prepare the fold pipeline." = "Impossibile preparare la pipeline della piega.";
 "Could not update Launch at Login: %@" = "Impossibile aggiornare “Apri al login”: %@";
 "Could not update the captured windows: %@" = "Impossibile aggiornare le finestre registrate: %@";
+"Crop from the top" = "Ritaglia dall’alto";
 "Effect strength" = "Intensità dell’effetto";
 "Getting the desktop and the sensor ready." = "Preparazione della scrivania e del sensore.";
 "Hinge could not register ⌃⌥H (error %d)." = "Hinge non è riuscita a registrare ⌃⌥H (errore %d).";
@@ -57,6 +61,7 @@
 "The desktop renderer is missing. Rebuild the app." = "Il renderer della scrivania non è presente. Ricompila l’app.";
 "The desktop renderer stopped: %@" = "Il rendering della scrivania si è interrotto: %@";
 "The lid sensor stopped responding. Hinge turns back on as soon as it reconnects." = "Il sensore dello schermo ha smesso di rispondere. Hinge si riattiverà appena si ricollega.";
+"The top of the desktop slides out of view as the lid closes." = "La parte superiore della scrivania scorre fuori dalla vista quando chiudi il coperchio.";
 "This Mac doesn't appear to have a lid angle sensor, so Hinge can't follow the lid." = "Sembra che questo Mac non abbia un sensore dell’angolo dello schermo, quindi Hinge non può seguirlo.";
 "Turn Hinge on or off" = "Attiva o disattiva Hinge";
 "Turn Hinge on to follow the lid." = "Attiva Hinge per seguire lo schermo.";

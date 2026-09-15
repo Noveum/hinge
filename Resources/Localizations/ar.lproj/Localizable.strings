@@ -6,6 +6,9 @@
 "Back" = "رجوع";
 "Beside the folded desktop" = "بجانب سطح المكتب المطوي";
 "Black" = "أسود";
+"Blur builds toward the top and fades out near the hinge." = "يزداد التمويه باتجاه الأعلى ويتلاشى بالقرب من المفصلة.";
+"Blur by distance" = "تمويه حسب المسافة";
+"Blur grows with distance from the open screen, so the hinge edge stays sharp." = "يزداد التمويه مع المسافة عن الشاشة المفتوحة، فتظل الحافة عند المفصلة واضحة.";
 "Blur" = "تمويه";
 "Connected" = "متصل";
 "Controls" = "عناصر التحكم";
@@ -16,6 +19,7 @@
 "Could not prepare the fold pipeline." = "تعذر تجهيز مسار عرض الطيّة.";
 "Could not update Launch at Login: %@" = "تعذر تحديث «الفتح عند تسجيل الدخول»: %@";
 "Could not update the captured windows: %@" = "تعذر تحديث النوافذ المسجلة: %@";
+"Crop from the top" = "اقتصاص من الأعلى";
 "Effect strength" = "قوة التأثير";
 "Getting the desktop and the sensor ready." = "جارٍ تجهيز سطح المكتب والمستشعر.";
 "Hinge could not register ⌃⌥H (error %d)." = "تعذر على Hinge تسجيل ⌃⌥H (الخطأ %d).";
@@ -57,6 +61,7 @@
 "The desktop renderer is missing. Rebuild the app." = "مكوّن عرض سطح المكتب مفقود. أعد بناء التطبيق.";
 "The desktop renderer stopped: %@" = "توقف عرض سطح المكتب: %@";
 "The lid sensor stopped responding. Hinge turns back on as soon as it reconnects." = "توقف مستشعر الغطاء عن الاستجابة. سيعود Hinge للعمل فور إعادة الاتصال.";
+"The top of the desktop slides out of view as the lid closes." = "ينزلق الجزء العلوي من سطح المكتب خارج العرض عند إغلاق الغطاء.";
 "This Mac doesn't appear to have a lid angle sensor, so Hinge can't follow the lid." = "يبدو أن جهاز Mac هذا لا يحتوي على مستشعر لزاوية الغطاء، لذا لا يستطيع Hinge تتبُّع الغطاء.";
 "Turn Hinge on or off" = "تشغيل Hinge أو إيقافه";
 "Turn Hinge on to follow the lid." = "شغّل Hinge ليتتبّع الغطاء.";

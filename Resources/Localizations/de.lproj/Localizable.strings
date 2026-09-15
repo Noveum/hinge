@@ -6,6 +6,9 @@
 "Back" = "Zurück";
 "Beside the folded desktop" = "Neben dem gefalteten Schreibtisch";
 "Black" = "Schwarz";
+"Blur builds toward the top and fades out near the hinge." = "Die Unschärfe nimmt nach oben zu und lässt zum Scharnier hin nach.";
+"Blur by distance" = "Entfernungsabhängige Unschärfe";
+"Blur grows with distance from the open screen, so the hinge edge stays sharp." = "Die Unschärfe nimmt mit dem Abstand zum geöffneten Bildschirm zu, während die Scharnierkante scharf bleibt.";
 "Blur" = "Unschärfe";
 "Connected" = "Verbunden";
 "Controls" = "Steuerung";
@@ -16,6 +19,7 @@
 "Could not prepare the fold pipeline." = "Die Faltungspipeline konnte nicht vorbereitet werden.";
 "Could not update Launch at Login: %@" = "„Bei der Anmeldung öffnen“ konnte nicht aktualisiert werden: %@";
 "Could not update the captured windows: %@" = "Die aufgenommenen Fenster konnten nicht aktualisiert werden: %@";
+"Crop from the top" = "Von oben zuschneiden";
 "Effect strength" = "Effektstärke";
 "Getting the desktop and the sensor ready." = "Schreibtisch und Sensor werden vorbereitet.";
 "Hinge could not register ⌃⌥H (error %d)." = "Hinge konnte ⌃⌥H nicht registrieren (Fehler %d).";
@@ -57,6 +61,7 @@
 "The desktop renderer is missing. Rebuild the app." = "Der Schreibtisch-Renderer fehlt. Erstelle die App neu.";
 "The desktop renderer stopped: %@" = "Die Schreibtischdarstellung wurde angehalten: %@";
 "The lid sensor stopped responding. Hinge turns back on as soon as it reconnects." = "Der Deckelsensor reagiert nicht mehr. Hinge schaltet sich wieder ein, sobald er wieder verbunden ist.";
+"The top of the desktop slides out of view as the lid closes." = "Beim Schließen des Deckels gleitet der obere Teil des Schreibtischs aus dem Sichtfeld.";
 "This Mac doesn't appear to have a lid angle sensor, so Hinge can't follow the lid." = "Dieser Mac scheint keinen Deckelwinkelsensor zu haben, daher kann Hinge dem Deckel nicht folgen.";
 "Turn Hinge on or off" = "Hinge ein- oder ausschalten";
 "Turn Hinge on to follow the lid." = "Schalte Hinge ein, damit es dem Deckel folgt.";

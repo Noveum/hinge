@@ -6,6 +6,9 @@
 "Back" = "Atrás";
 "Beside the folded desktop" = "A los lados del escritorio plegado";
 "Black" = "Negro";
+"Blur builds toward the top and fades out near the hinge." = "El desenfoque aumenta hacia arriba y se desvanece cerca de la bisagra.";
+"Blur by distance" = "Desenfoque por distancia";
+"Blur grows with distance from the open screen, so the hinge edge stays sharp." = "El desenfoque aumenta con la distancia a la pantalla abierta, por lo que el borde de la bisagra se mantiene nítido.";
 "Blur" = "Desenfoque";
 "Connected" = "Conectado";
 "Controls" = "Controles";
@@ -16,6 +19,7 @@
 "Could not prepare the fold pipeline." = "No se pudo preparar la canalización del pliegue.";
 "Could not update Launch at Login: %@" = "No se pudo actualizar “Abrir al iniciar sesión”: %@";
 "Could not update the captured windows: %@" = "No se pudieron actualizar las ventanas capturadas: %@";
+"Crop from the top" = "Recortar desde arriba";
 "Effect strength" = "Intensidad del efecto";
 "Getting the desktop and the sensor ready." = "Preparando el escritorio y el sensor.";
 "Hinge could not register ⌃⌥H (error %d)." = "Hinge no pudo registrar ⌃⌥H (error %d).";
@@ -57,6 +61,7 @@
 "The desktop renderer is missing. Rebuild the app." = "Falta el renderizador del escritorio. Vuelve a compilar la app.";
 "The desktop renderer stopped: %@" = "El renderizado del escritorio se detuvo: %@";
 "The lid sensor stopped responding. Hinge turns back on as soon as it reconnects." = "El sensor de la tapa dejó de responder. Hinge se volverá a activar en cuanto se reconecte.";
+"The top of the desktop slides out of view as the lid closes." = "La parte superior del escritorio sale de la vista al cerrar la tapa.";
 "This Mac doesn't appear to have a lid angle sensor, so Hinge can't follow the lid." = "Parece que este Mac no tiene sensor de ángulo de la tapa, así que Hinge no puede seguirla.";
 "Turn Hinge on or off" = "Activar o desactivar Hinge";
 "Turn Hinge on to follow the lid." = "Activa Hinge para seguir la tapa.";

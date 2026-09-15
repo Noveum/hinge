@@ -6,6 +6,9 @@
 "Back" = "Terug";
 "Beside the folded desktop" = "Naast het gevouwen bureaublad";
 "Black" = "Zwart";
+"Blur builds toward the top and fades out near the hinge." = "De vervaging neemt naar boven toe en verdwijnt bij het scharnier.";
+"Blur by distance" = "Vervagen op afstand";
+"Blur grows with distance from the open screen, so the hinge edge stays sharp." = "De vervaging neemt toe met de afstand tot het geopende scherm, zodat de scharnierrand scherp blijft.";
 "Blur" = "Vervaging";
 "Connected" = "Verbonden";
 "Controls" = "Bediening";
@@ -16,6 +19,7 @@
 "Could not prepare the fold pipeline." = "Kan de vouwpipeline niet voorbereiden.";
 "Could not update Launch at Login: %@" = "Kan ‘Open bij inloggen’ niet bijwerken: %@";
 "Could not update the captured windows: %@" = "Kan de opgenomen vensters niet bijwerken: %@";
+"Crop from the top" = "Bijsnijden vanaf boven";
 "Effect strength" = "Effectsterkte";
 "Getting the desktop and the sensor ready." = "Bureaublad en sensor worden voorbereid.";
 "Hinge could not register ⌃⌥H (error %d)." = "Hinge kon ⌃⌥H niet registreren (fout %d).";
@@ -57,6 +61,7 @@
 "The desktop renderer is missing. Rebuild the app." = "De bureaubladrenderer ontbreekt. Bouw de app opnieuw.";
 "The desktop renderer stopped: %@" = "De weergave van het bureaublad is gestopt: %@";
 "The lid sensor stopped responding. Hinge turns back on as soon as it reconnects." = "De klepsensor reageert niet meer. Hinge gaat weer aan zodra de sensor opnieuw verbonden is.";
+"The top of the desktop slides out of view as the lid closes." = "De bovenkant van het bureaublad schuift uit beeld wanneer je het deksel sluit.";
 "This Mac doesn't appear to have a lid angle sensor, so Hinge can't follow the lid." = "Deze Mac lijkt geen klephoeksensor te hebben, dus Hinge kan de klep niet volgen.";
 "Turn Hinge on or off" = "Schakel Hinge in of uit";
 "Turn Hinge on to follow the lid." = "Zet Hinge aan om de klep te volgen.";

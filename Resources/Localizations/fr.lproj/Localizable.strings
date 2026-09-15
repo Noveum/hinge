@@ -6,6 +6,9 @@
 "Back" = "Retour";
 "Beside the folded desktop" = "De part et d’autre du bureau plié";
 "Black" = "Noir";
+"Blur builds toward the top and fades out near the hinge." = "Le flou augmente vers le haut et s’estompe près de la charnière.";
+"Blur by distance" = "Flou selon la distance";
+"Blur grows with distance from the open screen, so the hinge edge stays sharp." = "Le flou augmente avec la distance par rapport à l’écran ouvert, tandis que le bord de la charnière reste net.";
 "Blur" = "Flou";
 "Connected" = "Connecté";
 "Controls" = "Commandes";
@@ -16,6 +19,7 @@
 "Could not prepare the fold pipeline." = "Impossible de préparer le pipeline de rendu du pli.";
 "Could not update Launch at Login: %@" = "Impossible de mettre à jour « Ouvrir à la connexion » : %@";
 "Could not update the captured windows: %@" = "Impossible de mettre à jour les fenêtres capturées : %@";
+"Crop from the top" = "Rogner depuis le haut";
 "Effect strength" = "Intensité de l’effet";
 "Getting the desktop and the sensor ready." = "Préparation du bureau et du capteur.";
 "Hinge could not register ⌃⌥H (error %d)." = "Hinge n’a pas pu enregistrer ⌃⌥H (erreur %d).";
@@ -57,6 +61,7 @@
 "The desktop renderer is missing. Rebuild the app." = "Le moteur de rendu du bureau est introuvable. Recompilez l’app.";
 "The desktop renderer stopped: %@" = "Le rendu du bureau s’est arrêté : %@";
 "The lid sensor stopped responding. Hinge turns back on as soon as it reconnects." = "Le capteur d’angle ne répond plus. Hinge se réactivera dès qu’il sera reconnecté.";
+"The top of the desktop slides out of view as the lid closes." = "Le haut du bureau glisse hors du champ de vision à la fermeture du capot.";
 "This Mac doesn't appear to have a lid angle sensor, so Hinge can't follow the lid." = "Ce Mac ne semble pas avoir de capteur d’angle d’écran, Hinge ne peut donc pas suivre l’écran.";
 "Turn Hinge on or off" = "Activer ou désactiver Hinge";
 "Turn Hinge on to follow the lid." = "Activez Hinge pour suivre l’écran.";

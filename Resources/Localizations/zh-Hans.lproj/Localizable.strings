@@ -6,6 +6,9 @@
 "Back" = "返回";
 "Beside the folded desktop" = "折叠后桌面的两侧";
 "Black" = "黑色";
+"Blur builds toward the top and fades out near the hinge." = "越靠近顶部越模糊，靠近铰链时逐渐变清晰。";
+"Blur by distance" = "按距离模糊";
+"Blur grows with distance from the open screen, so the hinge edge stays sharp." = "距离打开的屏幕越远，模糊程度越高，因此铰链边缘保持清晰。";
 "Blur" = "模糊";
 "Connected" = "已连接";
 "Controls" = "控制";
@@ -16,6 +19,7 @@
 "Could not prepare the fold pipeline." = "无法准备折叠渲染管线。";
 "Could not update Launch at Login: %@" = "无法更新“登录时打开”：%@";
 "Could not update the captured windows: %@" = "无法更新录制的窗口：%@";
+"Crop from the top" = "从顶部裁剪";
 "Effect strength" = "效果强度";
 "Getting the desktop and the sensor ready." = "正在准备桌面和传感器。";
 "Hinge could not register ⌃⌥H (error %d)." = "Hinge 无法注册 ⌃⌥H（错误 %d）。";
@@ -57,6 +61,7 @@
 "The desktop renderer is missing. Rebuild the app." = "缺少桌面渲染组件。请重新构建应用。";
 "The desktop renderer stopped: %@" = "桌面渲染已停止：%@";
 "The lid sensor stopped responding. Hinge turns back on as soon as it reconnects." = "屏幕开合角度传感器停止响应。重新连接后 Hinge 会自动重新开启。";
+"The top of the desktop slides out of view as the lid closes." = "合上屏幕时，桌面顶部会滑出视野。";
 "This Mac doesn't appear to have a lid angle sensor, so Hinge can't follow the lid." = "这台 Mac 似乎没有屏幕开合角度传感器，因此 Hinge 无法跟随屏幕开合。";
 "Turn Hinge on or off" = "开启或关闭 Hinge";
 "Turn Hinge on to follow the lid." = "开启 Hinge 以跟随屏幕开合。";

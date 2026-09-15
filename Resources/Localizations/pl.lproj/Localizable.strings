@@ -6,6 +6,9 @@
 "Back" = "Wstecz";
 "Beside the folded desktop" = "Po bokach złożonego biurka";
 "Black" = "Czarne";
+"Blur builds toward the top and fades out near the hinge." = "Rozmycie narasta ku górze i zanika w pobliżu zawiasu.";
+"Blur by distance" = "Rozmycie według odległości";
+"Blur grows with distance from the open screen, so the hinge edge stays sharp." = "Rozmycie rośnie wraz z odległością od otwartego ekranu, więc krawędź przy zawiasie pozostaje ostra.";
 "Blur" = "Rozmycie";
 "Connected" = "Połączony";
 "Controls" = "Sterowanie";
@@ -16,6 +19,7 @@
 "Could not prepare the fold pipeline." = "Nie można przygotować potoku renderowania zagięcia.";
 "Could not update Launch at Login: %@" = "Nie można zaktualizować „Otwieraj przy logowaniu”: %@";
 "Could not update the captured windows: %@" = "Nie można zaktualizować nagrywanych okien: %@";
+"Crop from the top" = "Przycinaj od góry";
 "Effect strength" = "Siła efektu";
 "Getting the desktop and the sensor ready." = "Przygotowywanie biurka i czujnika.";
 "Hinge could not register ⌃⌥H (error %d)." = "Hinge nie może zarejestrować ⌃⌥H (błąd %d).";
@@ -57,6 +61,7 @@
 "The desktop renderer is missing. Rebuild the app." = "Brakuje renderera biurka. Zbuduj aplikację ponownie.";
 "The desktop renderer stopped: %@" = "Renderowanie biurka zostało zatrzymane: %@";
 "The lid sensor stopped responding. Hinge turns back on as soon as it reconnects." = "Czujnik pokrywy przestał odpowiadać. Hinge włączy się ponownie, gdy tylko czujnik się połączy.";
+"The top of the desktop slides out of view as the lid closes." = "Górna część biurka wysuwa się z widoku podczas zamykania pokrywy.";
 "This Mac doesn't appear to have a lid angle sensor, so Hinge can't follow the lid." = "Ten Mac prawdopodobnie nie ma czujnika kąta pokrywy, więc Hinge nie może za nią podążać.";
 "Turn Hinge on or off" = "Włącz lub wyłącz Hinge";
 "Turn Hinge on to follow the lid." = "Włącz Hinge, aby podążał za pokrywą.";

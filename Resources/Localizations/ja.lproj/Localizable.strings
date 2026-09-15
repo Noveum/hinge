@@ -6,6 +6,9 @@
 "Back" = "戻る";
 "Beside the folded desktop" = "折りたたんだデスクトップの両サイド";
 "Black" = "黒";
+"Blur builds toward the top and fades out near the hinge." = "上部に向かってぼかしが強くなり、ヒンジ付近では弱くなります。";
+"Blur by distance" = "距離に応じてぼかす";
+"Blur grows with distance from the open screen, so the hinge edge stays sharp." = "開いた画面から離れるほどぼかしが強くなり、ヒンジ側の端は鮮明に保たれます。";
 "Blur" = "ぼかし";
 "Connected" = "接続済み";
 "Controls" = "操作";
@@ -16,6 +19,7 @@
 "Could not prepare the fold pipeline." = "折り目の描画パイプラインを準備できませんでした。";
 "Could not update Launch at Login: %@" = "「ログイン時に開く」を更新できませんでした: %@";
 "Could not update the captured windows: %@" = "収録するウインドウを更新できませんでした: %@";
+"Crop from the top" = "上端から切り抜く";
 "Effect strength" = "エフェクトの強さ";
 "Getting the desktop and the sensor ready." = "デスクトップとセンサーを準備しています。";
 "Hinge could not register ⌃⌥H (error %d)." = "Hingeは⌃⌥Hを登録できませんでした（エラー %d）。";
@@ -57,6 +61,7 @@
 "The desktop renderer is missing. Rebuild the app." = "デスクトップの描画コンポーネントが見つかりません。アプリをビルドし直してください。";
 "The desktop renderer stopped: %@" = "デスクトップの描画が停止しました: %@";
 "The lid sensor stopped responding. Hinge turns back on as soon as it reconnects." = "ふたの角度センサーが応答しなくなりました。再接続されるとHingeは自動的にオンに戻ります。";
+"The top of the desktop slides out of view as the lid closes." = "ふたを閉じると、デスクトップの上部が表示範囲の外へ移動します。";
 "This Mac doesn't appear to have a lid angle sensor, so Hinge can't follow the lid." = "このMacにはふたの角度センサーがないようです。そのため、Hingeはふたの動きに追従できません。";
 "Turn Hinge on or off" = "Hingeのオン/オフ";
 "Turn Hinge on to follow the lid." = "ふたの動きに追従するには、Hingeをオンにしてください。";
